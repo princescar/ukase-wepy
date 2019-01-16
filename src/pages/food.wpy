@@ -1,0 +1,157 @@
+<template>
+  <view class="container fixed-header">
+    <header style="background-image: url('{{food.image}}');" />
+    <view class="card">
+      <view class="info">
+        <view class="title">
+          {{food.name}}
+          <span class="heat">{{food.heat}} Kcal</span>
+        </view>
+        <view class="price">¥ {{food.price}}</view>
+      </view>
+      <view class="actions">
+        <view wx:if="{{!food.favor}}" class="icon favor" />
+        <view wx:if="{{food.favor}}" class="icon unfavor" />
+        <view class="icon order" />
+      </view>
+    </view>
+    <view class="store">
+      {{food.spplr.name}}
+    </view>
+    <view class="description">
+      <wemark md="{{food.description}}" type="wemark" />
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import API from '../api'
+import Header from '../components/header'
+
+export default class extends wepy.page {
+  config = {
+    usingComponents: {
+      wemark: '../components/wemark/wemark'
+    },
+    navigationBarTextStyle: 'white'
+  }
+
+  components = {
+    header: Header
+  }
+
+  data = {
+    id: null,
+    food: null
+  }
+
+  methods = {
+  }
+
+  async loadData() {
+    this.food = await API.getFood(this.id)
+    this.$apply()
+  }
+
+  onLoad(opts) {
+    this.id = opts.id
+    this.loadData()
+  }
+}
+</script>
+
+<style lang="scss">
+.container {
+  background-color: #f8f8f8;
+}
+
+.header {
+  height: 225px;
+  background-color: #eee;
+}
+
+.card {
+  padding: 15px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  .info {
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      .heat {
+        margin: 0 10px;
+        border: 1px solid;
+        border-radius: 999px;
+        padding: 2px 5px;
+        font-size: 10px;
+        line-height: 1;
+        color: #38BA87;
+      }
+    }
+    .price {
+      font-size: 12px;
+      color: #295059;
+    }
+  }
+  .actions {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    .icon {
+      display: block;
+      width: 37px;
+      height: 38px;
+      padding: 10px;
+      background: url() center center / 17px 18px no-repeat;
+      &.favor {
+        background-image: url('data:image/svg+xml,<svg width="17" height="18" xmlns="http://www.w3.org/2000/svg"><path d="M1.125 16.874l7.002-2.94 7.002 2.94V1.124H1.125v15.75zM0 1.124C0 .505.504 0 1.125 0H15.13c.622 0 1.125.504 1.125 1.125v15.749c0 .804-.82 1.348-1.56 1.037l-7.003-2.94h.872l-7.002 2.94A1.125 1.125 0 0 1 0 16.874V1.124zm8.127 9.655l2.196 1c.449.204.754-.024.692-.505l-.298-2.317 1.66-1.718c.33-.341.225-.7-.248-.789l-2.402-.447-1.171-2.058c-.233-.409-.624-.41-.866.014l-1.162 2.04-2.402.449c-.47.088-.584.441-.248.789l1.66 1.717-.299 2.317c-.062.48.248.708.692.506l2.196-.998zm.466 1.024l-2.196.998c-1.245.566-2.449-.316-2.274-1.673l.299-2.317.306.925-1.66-1.718c-.956-.99-.501-2.423.852-2.676l2.402-.449-.772.55 1.162-2.04c.669-1.174 2.153-1.19 2.822-.015l1.171 2.058-.772-.55 2.403.449c1.358.253 1.8 1.693.85 2.676l-1.66 1.717.307-.925.298 2.317c.175 1.358-1.025 2.24-2.274 1.673l-2.196-1h.932z" fill="#F5A623" fill-rule="nonzero"/></svg>');
+      }
+      &.unfavor {
+        background-image: url('data:image/svg+xml,<svg width="17" height="18" xmlns="http://www.w3.org/2000/svg"><path d="M1.125 16.874l7.002-2.94 7.002 2.94V1.124H1.125v15.75zM0 1.124C0 .505.504 0 1.125 0H15.13c.622 0 1.125.504 1.125 1.125v15.749c0 .804-.82 1.348-1.56 1.037l-7.003-2.94h.872l-7.002 2.94A1.125 1.125 0 0 1 0 16.874V1.124zm8.127 9.655l2.196 1c.449.204.754-.024.692-.505l-.298-2.317 1.66-1.718c.33-.341.225-.7-.248-.789l-2.402-.447-1.171-2.058c-.233-.409-.624-.41-.866.014l-1.162 2.04-2.402.449c-.47.088-.584.441-.248.789l1.66 1.717-.299 2.317c-.062.48.248.708.692.506l2.196-.998zm.466 1.024l-2.196.998c-1.245.566-2.449-.316-2.274-1.673l.299-2.317.306.925-1.66-1.718c-.956-.99-.501-2.423.852-2.676l2.402-.449-.772.55 1.162-2.04c.669-1.174 2.153-1.19 2.822-.015l1.171 2.058-.772-.55 2.403.449c1.358.253 1.8 1.693.85 2.676l-1.66 1.717.307-.925.298 2.317c.175 1.358-1.025 2.24-2.274 1.673l-2.196-1h.932z" fill="#F5A623" fill-rule="nonzero"/></svg>');
+      }
+      &.order {
+        width: 52px;
+        height: 52px;
+        background-image: url('data:image/svg+xml,<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><path d="M9 0a9 9 0 0 0-9 9 9 9 0 0 0 9 9 9 9 0 0 0 9-9 9 9 0 0 0-9-9zm5.192 9.53a.278.278 0 0 1-.277.278H9.808v4.107a.278.278 0 0 1-.277.277H8.469a.278.278 0 0 1-.277-.277V9.808H4.085a.278.278 0 0 1-.277-.277V8.469c0-.152.124-.277.277-.277h4.107V4.085c0-.153.125-.277.277-.277h1.062c.152 0 .277.124.277.277v4.107h4.107c.153 0 .277.125.277.277v1.062z" fill-rule="nonzero" fill="#38BA87"/></svg>');
+        background-size: 32px 32px;
+      }
+    }
+  }
+}
+
+.store {
+  position: relative;
+  margin-top: 1px;
+  padding: 10px;
+  padding-left: 45px;
+  padding-right: 50px;
+  font-size: 14px;
+  background: #fff url() right 20px center / 7px 11px no-repeat;
+  background-image: url('data:image/svg+xml,<svg width="7" height="11" xmlns="http://www.w3.org/2000/svg"><path d="M6.344 4.91L1.89.572a.704.704 0 0 0-.974 0 .66.66 0 0 0 0 .948L4.89 5.386.916 9.254a.658.658 0 0 0 0 .947c.268.26.704.26.974 0l4.454-4.338a.66.66 0 0 0 0-.953z" fill="#AEAEAE" fill-rule="evenodd"/></svg>');
+  &:before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: url() center center / 16px 16px no-repeat;
+    background-image: url('data:image/svg+xml,<svg width="18" height="16" xmlns="http://www.w3.org/2000/svg"><g fill="#4a4a4a" fill-rule="nonzero"><path d="M2.445 1h13.11c.593 0 .593-1 0-1H2.445c-.593 0-.593 1 0 1zM4.084 6.343C4.02 7.635.98 7.635.916 6.343c-.023-.457-.938-.458-.916 0 .11 2.21 4.89 2.21 5 0 .022-.458-.893-.457-.916 0z"/><path d="M8.084 6.343c-.065 1.292-3.104 1.292-3.168 0-.023-.457-.938-.458-.916 0 .11 2.209 4.89 2.21 5 0 .022-.458-.894-.457-.916 0z"/><path d="M13.084 6.343c-.064 1.292-3.103 1.292-3.168 0-.022-.457-.938-.458-.916 0 .11 2.209 4.89 2.21 5 0 .022-.458-.893-.457-.916 0z"/><path d="M17.084 6.343c-.064 1.292-3.104 1.292-3.168 0-.023-.457-.938-.458-.916 0 .11 2.209 4.89 2.21 5 0 .022-.458-.893-.457-.916 0z"/><path d="M2.063.027C1.199-.222.699 1.317.518 1.825.092 3.02-.158 4.448.113 5.71c.11.51.909.293.8-.215-.181-.842-.02-1.976.221-2.87.157-.586.361-1.207.728-1.704.074-.1.188-.14.089-.102.042-.016-.057.003-.109-.012.515.148.733-.632.22-.779zM16.258.79c-.111.049-.117.057-.207.04.047.009-.083-.05.017.009a.672.672 0 0 1 .101.1c.386.42.548 1.112.699 1.636.254.884.4 2.036.22 2.87-.108.509.691.725.8.215.274-1.27.008-2.676-.404-3.883-.194-.57-.731-2.078-1.644-1.684-.489.21-.066.907.418.697zM15.989 12.54v1.558c0 .238.157 1.015-.286 1.015H2.295c-.506 0-.298-1.166-.298-1.432v-5.26c0-.562-.997-.562-.997 0v6.266c0 .595.27 1.101.98 1.272.228.055.515.026.748.026h11.829c.72 0 1.707.142 2.185-.449.346-.428.244-1.023.244-1.52v-1.477c0-.562-.997-.562-.997 0zM16 7.453v3.092c0 .605 1 .605 1 0V7.454c0-.605-1-.605-1 0z"/><path d="M7.823 15.56v-4.63c0-.044 1.118-.02 1.218-.02.081 0 1.136-.01 1.136.008v4.642c0 .587.823.587.823 0V10.918c0-.792-.65-.918-1.206-.918H7.99c-.553 0-.99.331-.99.99v4.57c0 .587.823.587.823 0z"/></g></svg>');
+  }
+}
+
+.description {
+  margin-top: 10px;
+  padding: 20px;
+  min-height: 400px;
+  background-color: #fff;
+}
+</style>

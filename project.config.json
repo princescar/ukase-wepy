@@ -1,0 +1,44 @@
+{
+	"description": "ukase",
+	"setting": {
+		"urlCheck": true,
+		"es6": false,
+		"postcss": false,
+		"minified": false,
+		"newFeature": true,
+		"autoAudits": false
+	},
+	"compileType": "miniprogram",
+	"appid": "wxa3397abb3b70172e",
+	"projectname": "ukase",
+	"miniprogramRoot": "dist/",
+	"libVersion": "2.1.0",
+	"condition": {
+		"search": {
+			"current": -1,
+			"list": []
+		},
+		"conversation": {
+			"current": -1,
+			"list": []
+		},
+		"plugin": {
+			"current": -1,
+			"list": []
+		},
+		"game": {
+			"list": []
+		},
+		"miniprogram": {
+			"current": 0,
+			"list": [
+				{
+					"id": 0,
+					"name": "debug",
+					"pathName": "pages/tab-mine",
+					"query": ""
+				}
+			]
+		}
+	}
+}

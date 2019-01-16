@@ -1,0 +1,47 @@
+<template>
+  <view class="pill" style="background-color: {{colors[type]}};">{{labels[type]}}</view>
+</template>
+
+<script>
+import wepy from 'wepy'
+
+export default class extends wepy.component {
+  props = {
+    type: String
+  }
+
+  data = {
+    labels: {
+      breakfast: '早',
+      lunch: '中',
+      supper: '晚'
+    },
+    colors: {
+      breakfast: '#7ED321',
+      lunch: '#F5A623',
+      supper: '#4A90E2'
+    }
+  }
+
+  methods = {
+    back() {
+      wepy.navigateBack()
+    }
+  }
+}
+</script>
+
+<style lang="scss">
+.pill {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  margin: 0 2px;
+  border-radius: 999px;
+  vertical-align: middle;
+  text-align: center;
+  font-size: 12px;
+  color: #fff;
+}
+</style>

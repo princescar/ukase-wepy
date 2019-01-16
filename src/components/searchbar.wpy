@@ -1,0 +1,28 @@
+<template>
+  <view class="search-bar">
+    <slot name="children"/>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+
+export default class extends wepy.component {
+}
+</script>
+
+<style lang="scss">
+.search-bar {
+  line-height: 35px;
+  vertical-align: middle;
+  padding-left: 40px;
+  border-radius: 100px;
+  font-size: 12px;
+  color: #4A4A4A;
+  background-color: rgba(255,255,255,0.82);
+  background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50"><path fill="#4a4a4a" d="M21 3C11.621 3 4 10.621 4 20s7.621 17 17 17c3.71 0 7.14-1.195 9.938-3.219l13.156 13.125 2.812-2.812-13-13.032A16.923 16.923 0 0 0 38 20c0-9.379-7.621-17-17-17zm0 2c8.297 0 15 6.703 15 15s-6.703 15-15 15S6 28.297 6 20 12.703 5 21 5z"/></svg>');
+  background-size: 16px 16px;
+  background-repeat: no-repeat;
+  background-position: 16px center;
+}
+</style>

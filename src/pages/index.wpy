@@ -1,0 +1,31 @@
+<template>
+  <view />
+</template>
+
+<script>
+import wepy from 'wepy'
+import API from '../api'
+
+export default class extends wepy.page {
+  async onLoad(opts) {
+    const { code } = await wepy.login()
+    console.log(code)
+    const token = await API.login(code)
+    wepy.setStorageSync('token', token)
+
+    const next = opts.r || '/pages/tab-gyms'
+    wepy.reLaunch({ url: next })
+  }
+}
+</script>
+
+<style lang="scss">
+.container {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+</style>

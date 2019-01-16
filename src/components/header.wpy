@@ -1,0 +1,93 @@
+<template>
+  <view class="header" style="padding-top: {{paddingTop}}px;">
+    <view class="{{'navigation' + (showBack ? ' show-back' : '')}}" style="height: {{navigationHeight}}px;">
+      <view class="{{'title ' + (textWhite ? ' white' : '')}}">
+        <slot name="left"/>
+        {{title}}
+        <slot name="right"/>
+      </view>
+    </view>
+    <slot name="children"/>
+    <view wx:if="{{showBack}}" @tap="back" class="back" style="top: {{paddingTop}}px;"/>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import Device from '../services/device'
+
+export default class extends wepy.component {
+  props = {
+    title: String,
+    white: {
+      type: String,
+      default: 'false'
+    }
+  }
+
+  data = {
+    textWhite: false,
+    showBack: false,
+    paddingTop: 20,
+    navigationHeight: 44
+  }
+
+  methods = {
+    back() {
+      wepy.navigateBack()
+    }
+  }
+
+  onLoad() {
+    try {
+      this.textWhite = JSON.parse(this.white)
+    } catch (e) {}
+
+    const pageStack = getCurrentPages()
+    this.showBack = pageStack.length > 1
+
+    this.paddingTop = Device.systemInfo.statusBarHeight
+    this.navigationHeight = Device.menuButtonRect.height / Device.systemInfo.pixelRatio + 12
+
+    this.$apply()
+  }
+}
+</script>
+
+<style lang="scss">
+.header {
+  &>.children {
+    position: relative;
+  }
+}
+
+.back {
+  position: fixed;
+  left: 0;
+  top: 20px;
+  height: 32px;
+  width: 32px;
+  margin: 4px;
+  margin-left: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.6) url() center / 16px 16px no-repeat;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 31.494 31.494" width="512" height="512"><path d="M10.273 5.009a1.112 1.112 0 0 1 1.587 0 1.12 1.12 0 0 1 0 1.571l-8.047 8.047h26.554c.619 0 1.127.492 1.127 1.111s-.508 1.127-1.127 1.127H3.813l8.047 8.032c.429.444.429 1.159 0 1.587a1.112 1.112 0 0 1-1.587 0L.321 16.532a1.12 1.12 0 0 1 0-1.571l9.952-9.952z" fill="#222"/></svg>');
+}
+
+.navigation {
+  padding: 0 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  &.show-back {
+    padding-left: 46px;
+  }
+  &>.title {
+    font-size: 18px;
+    font-weight: 600;
+    &.white {
+      color: #fff;
+    }
+  }
+}
+</style>

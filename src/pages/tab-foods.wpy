@@ -1,0 +1,455 @@
+<template>
+  <view class="container fixed-header">
+    <header title="健康饮食计划" white="true">
+      <view slot="children" class="x-scroll">
+        <view class="schedule">
+          <view class="{{'day' + (selectedDay === item.day ? ' selected' : '') + (bookings[item.day] && bookings[item.day].length > 0 ? ' has-booking' : '')}}" wx:for="{{days}}" wx:key="item.day" @tap="selectDay({{item.day}})">
+            {{item.label}}
+          </view>
+        </view>
+      </view>
+      <view slot="children" class="day-schedule">
+        <view class="diet-list" wx:if="{{hasBooking}}">
+          <repeat for="{{bookings[selectedDay]}}" key="item.type">
+            <view class="item" @tap="removeBooking({{selectedDay}}, {{item}})">
+              <pill :type="item.type" />
+              {{item.food.name}}
+            </view>
+          </repeat>
+          <view class="tip" wx:if="{{!bookings[selectedDay] || bookings[selectedDay].length === 0}}">
+            当天还没有饮食计划，可在下方添加
+          </view>
+        </view>
+        <view class="confirm" wx:if="{{hasBooking}}" @tap="buy">购买</view>
+        <view class="tip" wx:if="{{!hasBooking}}">
+          暂未添加饮食计划，可在下方添加
+        </view>
+      </view>
+    </header>
+    <view class="main y-scroll">
+      <view class="category-list">
+        <view class="item" wx:for="{{categories}}" wx:for-item="category" wx:key="category.name">
+          <view class="title">
+            <view class="name">{{category.name}}</view>
+            <!-- <view class="count">{{category.foods.length}}</view> -->
+          </view>
+          <view class="x-scroll">
+            <view class="food-list">
+              <view class="item" wx:for="{{category.foods}}" wx:for-item="food" wx:key="food.id" @tap="detail({{food}})">
+                <image src="{{food.image}}" mode="aspectFill" />
+                <view class="pill-list">
+                  <repeat for="{{food.labels}}" key="item">
+                    <pill :type="item" />
+                  </repeat>
+                </view>
+                <view class="name">{{food.name}}</view>
+                <view class="heat">{{food.heat}} Kcal</view>
+                <view class="order" @tap.stop="addFood({{food}})" />
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="{{'dialog-wrapper' + (dialogOpen ? ' show' : '')}}" @tap="closeDialog">
+      <view class="dialog" @tap.stop="doNothing">
+        <view class="close" @tap="closeDialog" />
+        <view class="head">
+          <image src="{{selectedFood.image}}" mode="aspectFill" />
+          <view class="name">{{selectedFood.name}}</view>
+          <view class="price">¥ {{selectedFood.price}}</view>
+          <view class="note">
+            <view>{{selectedFood.heat}} Kcal</view>
+            <view>适宜：{{selectedFood.tags}}</view>
+          </view>
+        </view>
+        <view class="body">
+          <view class="selection">
+            <view class="title">
+              计划哪天用餐
+            </view>
+            <view class="group">
+              <view class="{{'item' + (selectedBookingDays[item.day] ? ' selected' : '')}}" wx:for="{{days}}" wx:key="item.day" @tap="selectBookingDay({{item.day}})">
+                {{item.label}}
+              </view>
+            </view>
+          </view>
+          <view class="selection">
+            <view class="title">
+              选择用餐时间
+            </view>
+            <view class="group">
+              <view wx:for="{{selectedFood.labels}}" wx:key="index" class="{{'item' + (selectedBookingType === item ? ' selected' : '')}}" @tap="selectBookingType({{item}})">
+                {{bookingTypeNames[item]}}
+              </view>
+            </view>
+          </view>
+        </view>
+        <view class="actions">
+          <view class="button primary" @tap="addToDiet">
+            加入到饮食计划
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import _ from 'lodash'
+import moment from 'moment'
+import API from '../api'
+import ShoppingCart from '../services/shopping-cart'
+import Header from '../components/header'
+import Pill from '../components/pill'
+
+export default class extends wepy.page {
+  config = {
+    disableScroll: true,
+    navigationBarTextStyle: 'white'
+  }
+
+  components = {
+    header: Header,
+    pill: Pill
+  }
+
+  data = {
+    categories: [],
+    days: [],
+    selectedDay: null,
+    bookings: {},
+    selectedFood: null,
+    selectedBookingDays: {},
+    bookingTypeNames: {
+      breakfast: '早餐',
+      lunch: '中餐',
+      supper: '晚餐'
+    },
+    selectedBookingType: null,
+    dialogOpen: false
+  }
+
+  computed = {
+    hasBooking() {
+      return _.flatten(_.values(this.bookings)).length > 0
+    }
+  }
+
+  watch = {
+    dialogOpen() {
+      if (this.dialogOpen) {
+        wepy.hideTabBar({ animation: true })
+      } else {
+        wepy.showTabBar({ animation: true })
+      }
+    }
+  }
+
+  methods = {
+    doNothing() {},
+    selectDay(day) {
+      this.selectedDay = day
+    },
+    addFood(food) {
+      this.selectedFood = food
+      this.selectedBookingDays = { [this.selectedDay]: true }
+      if (this.selectedFood.labels.length === 1) {
+        this.selectedBookingType = this.selectedFood.labels[0]
+      }
+      this.dialogOpen = true
+      this.$apply()
+    },
+    selectBookingDay(day) {
+      this.selectedBookingDays[day] = !this.selectedBookingDays[day]
+    },
+    selectBookingType(type) {
+      this.selectedBookingType = type
+    },
+    addToDiet() {
+      const selectedDays = _.keys(_.pickBy(this.selectedBookingDays, x => x))
+      if (selectedDays.length === 0) {
+        wepy.showToast({ title: '请选择计划用餐时间', icon: 'none' })
+        return
+      }
+      if (!this.selectedBookingType) {
+        wepy.showToast({ title: '请选择用餐时间', icon: 'none' })
+        return
+      }
+      _.each(selectedDays, day => {
+        if (!this.bookings[day]) {
+          this.bookings[day] = []
+        }
+        _.remove(this.bookings[day], x => x.type === this.selectedBookingType)
+        this.bookings[day].push({
+          type: this.selectedBookingType,
+          food: this.selectedFood
+        })
+      })
+      this.selectedBookingDays = {}
+      this.selectedBookingType = null
+      this.dialogOpen = false
+      this.selectedDay = _.minBy(selectedDays, x => moment(x).toDate())
+      ShoppingCart.set(this.bookings)
+      this.$apply()
+    },
+    async removeBooking(day, item) {
+      const { confirm } = await wepy.showModal({
+        title: '提示',
+        content: `确定不吃${item.food.name}了吗？`
+      })
+      if (confirm) {
+        _.remove(this.bookings[day], x => x.type === item.type && x.food.id === item.food.id)
+        ShoppingCart.set(this.bookings)
+        this.$apply()
+      }
+    },
+    closeDialog() {
+      this.selectedBookingDays = {}
+      this.selectedBookingType = null
+      this.dialogOpen = false
+    },
+    buy() {
+      const items = _.flatten(_.values(this.bookings))
+      if (items.length > 0) {
+        wepy.navigateTo({ url: 'confirm-order' })
+      }
+    },
+    detail(item) {
+      wepy.navigateTo({ url: `food?id=${item.id}` })
+    }
+  }
+
+  async loadFoods() {
+    this.foods = await API.searchFoods()
+    const categories = _.uniq(_.flatten(_.map(this.foods, x => x.tags)))
+    this.categories = _.map(categories, x => {
+      return { name: x }
+    })
+    _.each(this.categories, x => {
+      x.foods = _.filter(this.foods, y => _.includes(y.tags, x.name))
+    })
+    this.$apply()
+  }
+
+  async loadSchedule() {
+    this.days = _.map(_.range(6), x => {
+      const date = moment().add(x, 'days')
+      return {
+        day: date.format('YYYY-MM-DD'),
+        label: date.format('ddd')
+      }
+    })
+    this.selectedDay = this.days[0].day
+    await API.getDiet(this.days[0].day, this.days[this.days.length - 1].day)
+    this.bookings = ShoppingCart.get() || {}
+    this.$apply()
+  }
+
+  onShow() {
+    this.loadSchedule()
+    this.loadFoods()
+  }
+}
+</script>
+
+<style lang="scss">
+.header {
+  background: linear-gradient(
+      240deg,
+      rgba(8, 174, 234, 1) 0%,
+      rgba(47, 181, 130, 1) 100%
+    )
+    rgba(56, 186, 135, 0.3);
+}
+
+.schedule {
+  padding: 5px;
+  display: inline-flex;
+  flex-direction: row;
+  &>.day {
+    position: relative;
+    flex: 1;
+    margin: 0 5px;
+    padding: 3px 5px;
+    border-radius: 3px;
+    text-align: center;
+    white-space: nowrap;
+    font-size: 12px;
+    color: #fff;
+    &.selected {
+      background-color: #fff;
+      color: #000;
+    }
+    &.has-booking {
+      &:after {
+        position: absolute;
+        right: -2.5px;
+        top: -2.5px;
+        content: '';
+        width: 5px;
+        height: 5px;
+        border-radius: 999px;
+        background-color: #f00;
+      }
+    }
+  }
+}
+
+.day-schedule {
+  margin: 10px;
+  padding: 10px;
+  border-radius: 3px;
+  display: flex;
+  flex-direction: row;
+  background-color: #fff;
+  &>.diet-list {
+    flex: 1;
+  }
+  &>.confirm {
+    width: 70px;
+    min-height: 30px;
+    border: 1rpx solid #FF3302;
+    border-radius: 3px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    color: #FF3302;
+  }
+  .tip {
+    flex: 1;
+    display: flex;
+    align-self: center;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    color: #9B9B9B;
+  }
+}
+
+.diet-list {
+  margin-right: 10px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  &>.item {
+    font-size: 12px;
+    margin: 5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.category-list {
+  padding-top: 10px;
+  &>.item {
+    margin-bottom: 10px;
+    &>.title {
+      padding: 5px 15px;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      &>.name {
+        font-size: 14px;
+      }
+      &>.count {
+        padding-right: 16px;
+        font-size: 12px;
+        color: #295059;
+        background: url() right center / 7px 12px no-repeat;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 7 11"><path fill="#AEAEAE" fill-rule="evenodd" d="M6.3442 4.9097L1.8901.5721c-.2697-.2609-.706-.2609-.974 0-.268.2625-.268.6873 0 .9481l3.9732 3.8661L.916 9.2541a.6576.6576 0 0 0 0 .9464c.268.2609.7043.2609.974 0L6.3442 5.863c.134-.1371.2027-.306.2027-.4766a.6605.6605 0 0 0-.2027-.4766z"/></svg>');
+      }
+    }
+  }
+}
+
+.food-list {
+  padding: 0 5px;
+  display: inline-flex;
+  flex-direction: row;
+  &>.item {
+    position: relative;
+    height: 190px;
+    width: 135px;
+    min-width: 135px;
+    border-radius: 5px;
+    margin: 10px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0px 5px 5px 0px rgba(0, 0, 0, 0.03);
+    image {
+      height: 135px;
+      width: 135px;
+      background-color: #eee;
+    }
+    .pill-list {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+    .name {
+      position: absolute;
+      bottom: 25px;
+      left: 10px;
+      font-size: 12px;
+    }
+    .heat {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      font-size: 10px;
+      color: #30b784;
+    }
+    .order {
+      position: absolute;
+      bottom: 10px;
+      right: 0;
+      width: 32px;
+      height: 32px;
+      background: url() center center / 17px 18px no-repeat;
+      background-image: url('data:image/svg+xml,<svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><path d="M9 0a9 9 0 0 0-9 9 9 9 0 0 0 9 9 9 9 0 0 0 9-9 9 9 0 0 0-9-9zm5.192 9.53a.278.278 0 0 1-.277.278H9.808v4.107a.278.278 0 0 1-.277.277H8.469a.278.278 0 0 1-.277-.277V9.808H4.085a.278.278 0 0 1-.277-.277V8.469c0-.152.124-.277.277-.277h4.107V4.085c0-.153.125-.277.277-.277h1.062c.152 0 .277.124.277.277v4.107h4.107c.153 0 .277.125.277.277v1.062z" fill-rule="nonzero" fill="#38BA87"/></svg>');
+      background-size: 18px 18px;
+    }
+  }
+}
+
+.dialog {
+  &>.head {
+    position: relative;
+    margin-top: -20px;
+    margin-bottom: 20px;
+    image {
+      margin-left: 10px;
+      height: 135px;
+      width: 135px;
+      border-radius: 3px;
+    }
+    .name {
+      position: absolute;
+      left: 165px;
+      top: 30px;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .price {
+      position: absolute;
+      left: 165px;
+      top: 60px;
+      font-size: 14px;
+      color: #4A4A4A;
+    }
+    .note {
+      position: absolute;
+      left: 165px;
+      top: 100px;
+      font-size: 12px;
+      color: #30B784;
+    }
+  }
+}
+</style>
