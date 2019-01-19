@@ -121,6 +121,10 @@ export default class extends wepy.page {
       }
     },
     async confirm() {
+      if (!this.address) {
+        wepy.showToast({ title: '请选择配送地址', icon: 'none' })
+        return
+      }
       await Promise.all(_.map(this.plainBookings, x => {
         return API.newDiet([x], x.supplierId, moment(x.mealDate).toDate())
       }))
