@@ -234,7 +234,7 @@ export default class extends wepy.page {
   }
 
   async loadSchedule() {
-    this.days = _.map(_.range(6), x => {
+    this.days = _.map(_.range(7), x => {
       const date = moment().add(x, 'days')
       return {
         day: date.format('YYYY-MM-DD'),
