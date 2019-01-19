@@ -1,6 +1,6 @@
 {
   "name": "ukase",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "ukase",
   "main": "dist/app.js",
   "scripts": {
@@ -14,6 +14,7 @@
     "lodash": "^4.17.11",
     "moment": "^2.23.0",
     "querystring": "^0.2.0",
+    "weapp-qrcode": "^1.0.0",
     "wepy": "^1.6.0",
     "wepy-async-function": "^1.4.4",
     "wepy-cli": "^1.7.3",

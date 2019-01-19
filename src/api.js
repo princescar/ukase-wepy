@@ -71,6 +71,9 @@ export default {
   },
   getDiet(from, to) {
     return get('/diet', { from, to })
+  },
+  getFoodOrders() {
+    return get('/orders?page=1&size=9999')
   }
 }
 
