@@ -1,5 +1,5 @@
 <template>
-  <view />
+  <view class="initializing" />
 </template>
 
 <script>
@@ -20,12 +20,10 @@ export default class extends wepy.page {
 </script>
 
 <style lang="scss">
-.container {
+.initializing {
   height: 100vh;
   width: 100vw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
+  background: #fff url() center / 100% no-repeat;
+  background-image: url('https://mmbiz.qpic.cn/mmbiz_gif/Q51MeZaxUwkV0tkXic7R4asFSPAViajRVvxPHF8BzlNxb4laa9DXUeX6TjMib6iaFwD7qErCUouLo8bGKBakOdK5TQ/640?wx_fmt=gif&wxfrom=5&wx_lazy=1');
 }
 </style>
