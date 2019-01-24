@@ -3,25 +3,25 @@
     <header title="健康饮食计划" white="true">
       <view slot="children" class="x-scroll">
         <view class="schedule">
-          <view class="{{'day' + (selectedDay === item.day ? ' selected' : '') + (bookings[item.day] && bookings[item.day].length > 0 ? ' has-booking' : '')}}" wx:for="{{days}}" wx:key="item.day" @tap="selectDay({{item.day}})">
+          <view class="{{'day' + (selectedDay === item.day ? ' selected' : '') + (dietByDay[item.day].length > 0 ? ' notify' : '')}}" wx:for="{{days}}" wx:key="item.day" @tap="selectDay({{item.day}})">
             {{item.label}}
           </view>
         </view>
       </view>
       <view slot="children" class="day-schedule">
-        <view class="diet-list" wx:if="{{hasBooking}}">
-          <repeat for="{{bookings[selectedDay]}}" key="item.type">
-            <view class="item" @tap="removeBooking({{selectedDay}}, {{item}})">
-              <pill :type="item.type" />
-              {{item.food.name}}
+        <view class="diet-list" wx:if="{{hasDiet}}">
+          <repeat for="{{dietByDay[selectedDay]}}" key="item.labelAs">
+            <view class="{{'item' + (item.pending ? ' faded' : '')}}" @tap="removeDiet({{item}})">
+              <pill :type="item.labelAs" />
+              {{item.name}}
             </view>
           </repeat>
-          <view class="tip" wx:if="{{!bookings[selectedDay] || bookings[selectedDay].length === 0}}">
+          <view class="tip" wx:if="{{dietByDay[selectedDay].length === 0}}">
             当天还没有饮食计划，可在下方添加
           </view>
         </view>
-        <view class="confirm" wx:if="{{hasBooking}}" @tap="buy">购买</view>
-        <view class="tip" wx:if="{{!hasBooking}}">
+        <view class="confirm" wx:if="{{pendingDiet.length > 0}}" @tap="buy">购买</view>
+        <view class="tip" wx:if="{{!hasDiet}}">
           暂未添加饮食计划，可在下方添加
         </view>
       </view>
@@ -69,7 +69,7 @@
               计划哪天用餐
             </view>
             <view class="group">
-              <view class="{{'item' + (selectedBookingDays[item.day] ? ' selected' : '')}}" wx:for="{{days}}" wx:key="item.day" @tap="selectBookingDay({{item.day}})">
+              <view class="{{'item' + (selectedDietDays[item.day] ? ' selected' : '')}}" wx:for="{{days}}" wx:key="item.day" @tap="toggleDietDay({{item.day}})">
                 {{item.label}}
               </view>
             </view>
@@ -79,8 +79,8 @@
               选择用餐时间
             </view>
             <view class="group">
-              <view wx:for="{{selectedFood.labels}}" wx:key="index" class="{{'item' + (selectedBookingType === item ? ' selected' : '')}}" @tap="selectBookingType({{item}})">
-                {{bookingTypeNames[item]}}
+              <view wx:for="{{selectedFood.labels}}" wx:key="index" class="{{'item' + (selectedDietLabel === item ? ' selected' : '')}}" @tap="selectDietLabel({{item}})">
+                {{dietLabels[item]}}
               </view>
             </view>
           </view>
@@ -119,21 +119,31 @@ export default class extends wepy.page {
     categories: [],
     days: [],
     selectedDay: null,
-    bookings: {},
+    pendingDiet: {},
+    fixedDiet: [],
     selectedFood: null,
-    selectedBookingDays: {},
-    bookingTypeNames: {
+    selectedDietDays: {},
+    dietLabels: {
       breakfast: '早餐',
       lunch: '中餐',
       supper: '晚餐'
     },
-    selectedBookingType: null,
+    selectedDietLabel: null,
     dialogOpen: false
   }
 
   computed = {
-    hasBooking() {
-      return _.flatten(_.values(this.bookings)).length > 0
+    hasDiet() {
+      return this.fixedDiet.length + this.pendingDiet.length > 0
+    },
+    dietByDay() {
+      const map = {}
+      _.each(_.map(this.days, x => x.day), day => {
+        const fixed = _.filter(this.fixedDiet, x => x.mealDate === day)
+        const pending = _.filter(this.pendingDiet, x => x.mealDate === day)
+        map[day] = _.concat(fixed, pending)
+      })
+      return map
     }
   }
 
@@ -154,65 +164,82 @@ export default class extends wepy.page {
     },
     addFood(food) {
       this.selectedFood = food
-      this.selectedBookingDays = { [this.selectedDay]: true }
+      this.selectedDietDays = { [this.selectedDay]: true }
       if (this.selectedFood.labels.length === 1) {
-        this.selectedBookingType = this.selectedFood.labels[0]
+        this.selectedDietLabel = this.selectedFood.labels[0]
       }
       this.dialogOpen = true
       this.$apply()
     },
-    selectBookingDay(day) {
-      this.selectedBookingDays[day] = !this.selectedBookingDays[day]
+    toggleDietDay(day) {
+      this.selectedDietDays[day] = !this.selectedDietDays[day]
     },
-    selectBookingType(type) {
-      this.selectedBookingType = type
+    selectDietLabel(label) {
+      this.selectedDietLabel = label
     },
     addToDiet() {
-      const selectedDays = _.keys(_.pickBy(this.selectedBookingDays, x => x))
+      const selectedDays = _.keys(_.pickBy(this.selectedDietDays, x => x))
       if (selectedDays.length === 0) {
         wepy.showToast({ title: '请选择计划用餐时间', icon: 'none' })
         return
       }
-      if (!this.selectedBookingType) {
+      if (!this.selectedDietLabel) {
         wepy.showToast({ title: '请选择用餐时间', icon: 'none' })
         return
       }
-      _.each(selectedDays, day => {
-        if (!this.bookings[day]) {
-          this.bookings[day] = []
+
+      // 检查是否与已固定的计划有冲突
+      const hasConflict = _.some(selectedDays, day => {
+        const conflict = _.find(this.fixedDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
+        if (conflict) {
+          wepy.showModal({ content: `${moment(conflict.mealDate).format('ddd')}已下单${conflict.name}为${this.dietLabels[conflict.labelAs]}，如需更改请先撤销订单`, title: '提示', showCancel: false })
+          return true
         }
-        _.remove(this.bookings[day], x => x.type === this.selectedBookingType)
-        this.bookings[day].push({
-          type: this.selectedBookingType,
-          food: this.selectedFood
+      })
+      if (hasConflict) {
+        return
+      }
+
+      _.each(selectedDays, day => {
+        _.remove(this.pendingDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
+        this.pendingDiet.push({
+          mealDate: day,
+          labelAs: this.selectedDietLabel,
+          ...this.selectedFood,
+          pending: true
         })
       })
-      this.selectedBookingDays = {}
-      this.selectedBookingType = null
+
+      ShoppingCart.set(this.pendingDiet)
+
+      this.selectedDietDays = {}
+      this.selectedDietLabel = null
       this.dialogOpen = false
       this.selectedDay = _.minBy(selectedDays, x => moment(x).toDate())
-      ShoppingCart.set(this.bookings)
       this.$apply()
     },
-    async removeBooking(day, item) {
+    async removeDiet(item) {
+      if (!item.pending) {
+        return
+      }
+
       const { confirm } = await wepy.showModal({
         title: '提示',
-        content: `确定不吃${item.food.name}了吗？`
+        content: `确定不吃${item.name}了吗？`
       })
       if (confirm) {
-        _.remove(this.bookings[day], x => x.type === item.type && x.food.id === item.food.id)
-        ShoppingCart.set(this.bookings)
+        _.remove(this.pendingDiet, x => x.mealDate === item.mealDate && x.labelAs === item.labelAs && x.id === item.id)
+        ShoppingCart.set(this.pendingDiet)
         this.$apply()
       }
     },
     closeDialog() {
-      this.selectedBookingDays = {}
-      this.selectedBookingType = null
+      this.selectedDietDays = {}
+      this.selectedDietLabel = null
       this.dialogOpen = false
     },
     buy() {
-      const items = _.flatten(_.values(this.bookings))
-      if (items.length > 0) {
+      if (this.pendingDiet.length > 0) {
         wepy.navigateTo({ url: 'confirm-order' })
       }
     },
@@ -242,8 +269,8 @@ export default class extends wepy.page {
       }
     })
     this.selectedDay = this.days[0].day
-    await API.getDiet(this.days[0].day, this.days[this.days.length - 1].day)
-    this.bookings = ShoppingCart.get() || {}
+    this.fixedDiet = await API.getDiet(_.first(this.days).day, _.last(this.days).day)
+    this.pendingDiet = ShoppingCart.get() || []
     this.$apply()
   }
 
@@ -282,7 +309,7 @@ export default class extends wepy.page {
       background-color: #fff;
       color: #000;
     }
-    &.has-booking {
+    &.notify {
       &:after {
         position: absolute;
         right: -2.5px;
@@ -341,6 +368,9 @@ export default class extends wepy.page {
     display: flex;
     flex-direction: row;
     align-items: center;
+    &.faded {
+      opacity: 0.5;
+    }
   }
 }
 

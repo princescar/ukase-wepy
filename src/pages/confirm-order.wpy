@@ -12,16 +12,16 @@
             {{address.userName}} {{address.telNumber}}
           </view>
         </view>
-        <view class="date-list" wx:for="{{dates}}" wx:key="item.date">
-          <view class="list-title">{{item.label}}</view>
+        <view class="date-list" wx:for="{{dates}}" wx:for-item="date" wx:key="date.date">
+          <view class="list-title">{{date.label}}</view>
           <view class="food-list">
-            <repeat for="{{bookings[item.date]}}" item="booking" key="index">
+            <repeat for="{{itemsByDay[date.date]}}" key="item.labelAs">
               <view class="food-item">
-                <image src="{{booking.food.image}}" mode="aspectFill" />
-                <view class="name">{{booking.food.name}}</view>
-                <pill :type="booking.type" />
-                <view class="price">¥ {{booking.food.price}}</view>
-                <view class="delete" @tap="removeBooking({{item.date}}, {{booking}})">删除</view>
+                <image src="{{item.image}}" mode="aspectFill" />
+                <view class="name">{{item.name}}</view>
+                <pill :type="item.labelAs" />
+                <view class="price">¥ {{item.price}}</view>
+                <view class="delete" @tap="removeBooking({{item}})">删除</view>
               </view>
             </repeat>
           </view>
@@ -58,29 +58,12 @@ export default class extends wepy.page {
 
   data = {
     address: null,
-    bookings: null
+    items: null
   }
 
   computed = {
-    plainBookings() {
-      return _.flatten(
-        _.map(this.bookings, (items, date) => {
-          return _.map(items, x => {
-            return {
-              id: x.food.id,
-              labelAs: x.type,
-              mealDate: date,
-              name: x.food.name,
-              price: x.food.price,
-              supplierId: x.food.supplierId,
-              quantity: 1
-            }
-          })
-        })
-      )
-    },
     dates() {
-      const dates = _.uniq(_.map(this.plainBookings, x => x.mealDate))
+      const dates = _.uniq(_.map(this.items, x => x.mealDate))
       return _.map(dates, x => {
         return {
           label: moment(x).format('ddd'),
@@ -88,8 +71,11 @@ export default class extends wepy.page {
         }
       })
     },
+    itemsByDay() {
+      return _.groupBy(this.items, x => x.mealDate)
+    },
     total() {
-      return _.sumBy(this.plainBookings, x => x.price)
+      return _.sumBy(this.items, x => x.price)
     }
   }
 
@@ -103,20 +89,17 @@ export default class extends wepy.page {
       })
       this.$apply()
     },
-    async removeBooking(day, item) {
+    async removeBooking(item) {
       const { confirm } = await wepy.showModal({
         title: '提示',
-        content: `确定不吃${item.food.name}了吗？`
+        content: `确定不吃${item.name}了吗？`
       })
       if (confirm) {
-        _.remove(
-          this.bookings[day],
-          x => x.type === item.type && x.food.id === item.food.id
-        )
-        ShoppingCart.set(this.bookings)
+        _.remove(this.items, x => x.mealDate === item.mealDate && x.labelAs === item.labelAs && x.id === item.id)
+        ShoppingCart.set(this.items)
         this.$apply()
       }
-      if (_.flatten(_.values(this.bookings)).length === 0) {
+      if (_.flatten(_.values(this.items)).length === 0) {
         wepy.navigateBack()
       }
     },
@@ -125,8 +108,15 @@ export default class extends wepy.page {
         wepy.showToast({ title: '请选择配送地址', icon: 'none' })
         return
       }
-      await Promise.all(_.map(this.plainBookings, x => {
-        return API.newDiet([x], x.supplierId, moment(x.mealDate).toDate())
+      await Promise.all(_.map(this.items, x => {
+        return API.newDiet(
+          [{
+            ...x,
+            quantity: 1
+          }],
+          x.supplierId,
+          moment(x.mealDate).toDate()
+        )
       }))
       wepy.showToast({ title: '预定成功！', icon: 'success', duration: 3000 })
       ShoppingCart.set(null)
@@ -135,7 +125,7 @@ export default class extends wepy.page {
   }
 
   async onLoad() {
-    this.bookings = ShoppingCart.get()
+    this.items = ShoppingCart.get()
     this.address = wepy.getStorageSync('address')
   }
 }
