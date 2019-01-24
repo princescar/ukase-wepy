@@ -2,7 +2,7 @@ let cart
 
 export default {
   set(items) {
-    console.log(`Set shopping cart to: `, items)
+    console.log(`shopping cart`, items)
     cart = items
   },
   get() {

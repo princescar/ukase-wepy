@@ -47,7 +47,7 @@ export default class extends wepy.component {
     this.showBack = pageStack.length > 1
 
     this.paddingTop = Device.systemInfo.statusBarHeight
-    this.navigationHeight = Device.menuButtonRect.height / Device.systemInfo.pixelRatio + 12
+    this.navigationHeight = Device.menuButtonRect.height + (Device.menuButtonRect.top - Device.systemInfo.statusBarHeight) * 2
 
     this.$apply()
   }
