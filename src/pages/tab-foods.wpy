@@ -119,7 +119,7 @@ export default class extends wepy.page {
     categories: [],
     days: [],
     selectedDay: null,
-    pendingDiet: {},
+    pendingDiet: [],
     fixedDiet: [],
     selectedFood: null,
     selectedDietDays: {},
@@ -166,7 +166,7 @@ export default class extends wepy.page {
       this.selectedFood = food
       this.selectedDietDays = { [this.selectedDay]: true }
       if (this.selectedFood.labels.length === 1) {
-        this.selectedDietLabel = this.selectedFood.labels[0]
+        this.selectedDietLabel = _.first(this.selectedFood.labels)
       }
       this.dialogOpen = true
       this.$apply()
@@ -268,7 +268,7 @@ export default class extends wepy.page {
         label: date.format('ddd')
       }
     })
-    this.selectedDay = this.days[0].day
+    this.selectedDay = _.first(this.days).day
     this.fixedDiet = await API.getDiet(_.first(this.days).day, _.last(this.days).day)
     this.pendingDiet = ShoppingCart.get() || []
     this.$apply()
@@ -424,13 +424,16 @@ export default class extends wepy.page {
     }
     .name {
       position: absolute;
-      bottom: 25px;
+      height: 28px;
+      bottom: 20px;
       left: 10px;
+      right: 30px;
       font-size: 12px;
+      line-height: 14px;
     }
     .heat {
       position: absolute;
-      bottom: 10px;
+      bottom: 5px;
       left: 10px;
       font-size: 10px;
       color: #30b784;
@@ -453,6 +456,7 @@ export default class extends wepy.page {
     position: relative;
     margin-top: -20px;
     margin-bottom: 20px;
+    margin-right: 40px;
     image {
       margin-left: 10px;
       height: 135px;
@@ -469,7 +473,7 @@ export default class extends wepy.page {
     .price {
       position: absolute;
       left: 165px;
-      top: 60px;
+      top: 80px;
       font-size: 14px;
       color: #4A4A4A;
     }

@@ -74,6 +74,15 @@ export default {
   },
   getFoodOrders() {
     return get('/orders?page=1&size=9999')
+  },
+  setFoodFavor(foodId, favor) {
+    return put(`/foods/${foodId}/favor`, favor)
+  },
+  setGymFavor(gymId, favor) {
+    return put(`/gyms/${gymId}/favor`, favor)
+  },
+  setSupplierFavor(supplierId, favor) {
+    return put(`/suppliers/${supplierId}/favor`, favor)
   }
 }
 
