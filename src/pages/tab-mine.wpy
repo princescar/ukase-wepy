@@ -57,7 +57,7 @@
           </view>
         </view>
         <view class="body">
-          <canvas class="qrcode-canvas" canvas-id="myQrcode" />
+          <canvas class="qrcode-canvas" canvas-id="qrcode" />
         </view>
         <view class="actions">
           <view class="button primary" @tap="closeDialog">
@@ -127,16 +127,6 @@ export default class extends wepy.page {
     }
   }
 
-  watch = {
-    dialogOpen() {
-      if (this.dialogOpen) {
-        wepy.hideTabBar({ animation: true })
-      } else {
-        wepy.showTabBar({ animation: true })
-      }
-    }
-  }
-
   methods = {
     onDateSelected(date) {
       this.selectedDate = date
@@ -145,12 +135,6 @@ export default class extends wepy.page {
       wepy.setEnableDebug({ enableDebug: true })
     },
     openQrCode() {
-      drawQrcode({
-        width: 200,
-        height: 200,
-        canvasId: 'myQrcode',
-        text: 'https://github.com/princescar/ukase-wepy'
-      })
       this.dialogOpen = true
     },
     closeDialog() {
@@ -165,6 +149,12 @@ export default class extends wepy.page {
   }
 
   onShow() {
+    drawQrcode({
+      width: 200,
+      height: 200,
+      canvasId: 'qrcode',
+      text: 'https://github.com/princescar/ukase-wepy'
+    })
     this.loadBookings()
   }
 }
@@ -314,6 +304,7 @@ export default class extends wepy.page {
   }
 }
 .qrcode-canvas {
+  background-color: #eee;
   height: 200px;
   width: 200px;
   margin: 20px;
