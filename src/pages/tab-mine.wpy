@@ -19,7 +19,7 @@
           <view class="name">订单</view>
         </view>
         <view class="item">
-          <view class="icon favor"/>
+          <view class="icon favor" @tap="favor" />
           <view class="name">收藏</view>
         </view>
       </view>
@@ -139,6 +139,9 @@ export default class extends wepy.page {
     },
     closeDialog() {
       this.dialogOpen = false
+    },
+    favor() {
+      wepy.navigateTo({ url: 'favorite' })
     }
   }
 

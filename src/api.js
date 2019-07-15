@@ -83,6 +83,15 @@ export default {
   },
   setSupplierFavor(supplierId, favor) {
     return put(`/suppliers/${supplierId}/favor`, favor)
+  },
+  getFavorFoods() {
+    return get('/foods/favor')
+  },
+  getFavorGyms() {
+    return get('/gyms/favor')
+  },
+  getFavorSuppliers() {
+    return get('/suppliers/favor')
   }
 }
 

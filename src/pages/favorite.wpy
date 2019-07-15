@@ -1,0 +1,59 @@
+<template>
+  <view class="container fixed-header">
+    <header title="我的收藏">
+      <view slot="children">
+        <tabs @change.user="tabChange" />
+      </view>
+    </header>
+    <view class="food-list" wx:if="{{mode === 'food'}}">
+      饮食
+    </view>
+    <view class="gym-list" wx:if="{{mode === 'gym'}}">
+      场馆
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import Tabs from 'wepy-com-tabs'
+import API from '../api'
+import Header from '../components/header'
+
+export default class extends wepy.page {
+  components = {
+    header: Header,
+    tabs: Tabs
+  }
+
+  data = {
+    mode: 'food',
+    foods: [],
+    gyms: []
+  }
+
+  methods = {
+    tabChange(index) {
+      this.mode = (index === 0 ? 'food' : 'gym')
+    }
+  }
+
+  async loadFoods() {
+    this.foods = await API.getFavorFoods()
+  }
+
+  async loadGyms() {
+    this.gyms = await API.getFavorGyms()
+  }
+
+  onLoad() {
+    this.$invoke('tabs', 'init', ['饮食', '场馆'])
+    this.loadFoods()
+    this.loadGyms()
+  }
+}
+</script>
+
+<style lang="scss">
+
+</style>

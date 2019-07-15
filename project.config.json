@@ -13,6 +13,8 @@
 	"projectname": "ukase",
 	"miniprogramRoot": "dist/",
 	"libVersion": "2.1.0",
+	"simulatorType": "wechat",
+	"simulatorPluginLibVersion": {},
 	"condition": {
 		"search": {
 			"current": -1,
@@ -30,15 +32,8 @@
 			"list": []
 		},
 		"miniprogram": {
-			"current": 0,
-			"list": [
-				{
-					"id": 0,
-					"name": "debug",
-					"pathName": "pages/tab-mine",
-					"query": ""
-				}
-			]
+			"current": -1,
+			"list": []
 		}
 	}
 }
