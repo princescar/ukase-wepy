@@ -11,6 +11,7 @@
   "author": "Halbert Lei <princescar@gmail.com>",
   "license": "MIT",
   "dependencies": {
+    "leancloud-storage": "^3.14.1",
     "lodash": "^4.17.11",
     "moment": "^2.23.0",
     "querystring": "^0.2.0",

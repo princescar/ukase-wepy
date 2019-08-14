@@ -3,11 +3,11 @@
     <header>
       <view slot="children" class="banner">
         <swiper indicator-dots="{{true}}" indicator-active-color="#fff" autoplay="{{true}}" circular="{{true}}">
-          <swiper-item wx:for="{{gym.pics}}" wx:key="item">
-            <view class="image" style="background-image: url('{{item}}');"/>
+          <swiper-item wx:for="{{images}}" wx:key="item">
+            <view class="image" style="background-image: url('{{item.url}}');"/>
           </swiper-item>
         </swiper>
-        <view class="image-count">{{gym.pics.length}}</view>
+        <view class="image-count">{{images.length}}</view>
       </view>
     </header>
     <view class="card">
@@ -20,17 +20,17 @@
         <view wx:if="{{gym.favor}}" class="icon unfavor" @tap="toggleFavor" />
       </view>
       <view class="note">
-        营业时间：{{gym.open}}
-        {{gym.address.region.name}}
+        营业时间：{{gym.openTime}}-{{gym.closeTime}}
+        {{gym.region.name}}
         {{gym.category}}
       </view>
       <view class="description">{{gym.description}}</view>
     </view>
     <view class="location" @tap="showMap">
-      {{gym.address.details}}
+      {{gym.address}}
     </view>
     <view class="sport-list">
-      <view class="sport" wx:for="{{gym.services}}" wx:key="item.id">
+      <view class="sport" wx:for="{{sports}}" wx:key="item.id">
         <view class="wrapper">
           <view class="title">{{item.name}}</view>
           <view class="description">{{item.description}}</view>
@@ -108,6 +108,8 @@ export default class extends wepy.page {
   data = {
     id: null,
     gym: null,
+    images: [],
+    sports: [],
     dialogOpen: false,
     selectedSport: null,
     mobile: null,
@@ -132,10 +134,10 @@ export default class extends wepy.page {
     },
     showMap() {
       wepy.openLocation({
-        latitude: this.gym.coordinate.lat,
-        longitude: this.gym.coordinate.lon,
+        latitude: this.gym.location.latitude,
+        longitude: this.gym.location.longitude,
         name: this.gym.name,
-        address: this.gym.address.details
+        address: this.gym.address
       })
     },
     book(item) {
@@ -184,9 +186,21 @@ export default class extends wepy.page {
     this.$apply()
   }
 
+  async loadImages() {
+    this.images = await API.getGymImages(this.id)
+    this.$apply()
+  }
+
+  async loadSports() {
+    this.sports = await API.getGymSports(this.id)
+    this.$apply()
+  }
+
   onLoad(opts) {
     this.id = opts.id
     this.loadData()
+    this.loadImages()
+    this.loadSports()
   }
 }
 </script>
@@ -303,7 +317,11 @@ export default class extends wepy.page {
   }
 }
 
-.dialog {
+.dialog-wrapper > .dialog {
+  bottom: unset;
+  top: 20vh;
+  left: 10px;
+  right: 10px;
   &>.body {
     padding: 15px;
     .form-item {

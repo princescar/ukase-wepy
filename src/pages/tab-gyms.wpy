@@ -38,7 +38,7 @@
         </view>
         <view class="list">
           <view class="item" wx:for="{{gyms}}" wx:key="item.id" @tap="detail({{item}})">
-            <image src="{{item.image}}" mode="aspectFill" />
+            <image src="{{item.thumbnail.url}}" mode="aspectFill" />
             <view class="summary">
               <view>
                 <view class="title">{{item.name}}</view>
@@ -46,7 +46,7 @@
               </view>
               <view class="note">
                 <view>
-                  {{item.address.district}}
+                  {{item.region.name}}
                   {{item.category}}
                 </view>
                 <view wx:if="{{hasUserLocation}}">{{distance.format(item.distance)}}</view>
@@ -90,7 +90,7 @@ export default class extends wepy.page {
       { label: '附近3km', value: { max: 3000, min: 0 } },
       { label: '附近10km', value: { max: 10000, min: 0 } },
       { label: '附近30km', value: { max: 30000, min: 0 } },
-      { label: '不限距离', value: { max: 99999999, min: 0 } }
+      { label: '不限距离', value: null }
     ],
     distanceIndex: 3,
     sortings: [

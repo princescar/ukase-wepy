@@ -1,35 +1,53 @@
 import wepy from 'wepy'
 import querystring from 'querystring'
+import Leancloud from 'leancloud-storage'
 
 const BASE_URL = 'https://api.hmc000.com'
 
 export default {
-  login(code) {
-    return post('/auth', { code })
+  login() {
+    return Leancloud.User.loginWithWeapp()
   },
   searchGyms({ location, distance, sortBy, filters, pagination } = {}) {
-    let query = {}
+    const query = new Leancloud.Query('Gym')
     if (location) {
-      query.ulon = location.longitude
-      query.ulat = location.latitude
-    }
-    if (distance) {
-      query.distn = toRangeString(distance)
+      query.near('location', location)
+      if (distance) {
+        query.withinKilometers('location', location, distance.max / 1000)
+      }
     }
     if (filters) {
-      Object.assign(query, filters)
+      for (const key in filters) {
+        query.equalTo(key, filters[key])
+      }
     }
     if (sortBy) {
-      const sign = {
-        asc: '+',
-        desc: '-'
-      }[sortBy.direction]
-      query.sort = `${sign}${sortBy.key}`
+      if (sortBy.direction === 'asc') {
+        query.ascending(sortBy.key)
+      } else {
+        query.descending(sortBy.key)
+      }
     }
     if (pagination) {
-      Object.assign(query, pagination)
+      query.skip(pagination.pageNo * pagination.pageSize)
+      query.limit(pagination.pageSize)
     }
-    return get('/searchGyms', query)
+    query.include('region')
+
+    return query.find().then(gyms => {
+      return gyms.map(x => {
+        const id = x.get('objectId')
+        const loc = x.get('location')
+        let distance
+        if (location) {
+          distance = loc.kilometersTo(location) * 1000
+        }
+        return Object.assign(x.toJSON(), {
+          id,
+          distance
+        })
+      })
+    })
   },
   searchFoods({ heat, price, sortBy, filters, pagination } = {}) {
     let query = {}
@@ -54,13 +72,41 @@ export default {
     }
     return get('/searchFoods', query)
   },
-  getGym(id) {
-    return get(`/gyms/${id}`)
+  async getGym(id) {
+    const query = new Leancloud.Query('Gym')
+    query.include('region')
+    const gym = await query.get(id)
+    return Object.assign(gym.toJSON(), {
+      id
+    })
+  },
+  async getGymImages(id) {
+    const query = new Leancloud.Query('GymImage')
+    const gym = Leancloud.Object.createWithoutData('Gym', id)
+    query.equalTo('gym', gym)
+    const images = await query.find()
+    return images.map(x => x.get('image'))
+  },
+  async getGymSports(id) {
+    const query = new Leancloud.Query('GymService')
+    const gym = Leancloud.Object.createWithoutData('Gym', id)
+    query.equalTo('gym', gym)
+    const sports = await query.find()
+    return sports.map(x => {
+      const id = x.get('objectId')
+      return Object.assign(x.toJSON(), {
+        id
+      })
+    })
   },
   getFood(id) {
     return get(`/foods/${id}`)
   },
   newBooking(serviceId, bookingDateTime, mobile) {
+    const booking = new Leancloud.Object('GymServiceBooking')
+    const service = Leancloud.Object.createWithoutData('GymService', serviceId)
+    booking.set('gymService', service)
+
     return post('/bookings', { serviceId, bookingDateTime, mobile })
   },
   getBookings() {
