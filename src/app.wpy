@@ -34,7 +34,7 @@ export default class extends wepy.app {
       color: '#7C7C7C',
       selectedColor: '#32A971',
       backgroundColor: '#FAFAFA',
-      borderStyle: 'black',
+      borderStyle: 'white',
       list: [
         {
           pagePath: 'pages/tab-gyms',

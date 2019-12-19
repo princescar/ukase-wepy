@@ -2,9 +2,9 @@
   <view class="container">
     <header>
       <view slot="left" class="setting" @longpress="openSetting"/>
-      <view slot="children" class="user-info">
+      <view slot="children" class="user-info" @tap="openQrCode">
         <open-data class="avatar" type="userAvatarUrl" />
-        <view class="name" @tap="openQrCode">
+        <view class="name">
           <open-data type="userNickName" />
           <view class="icon qrcode" />
         </view>
@@ -28,16 +28,16 @@
     <calendar :scheduleNumOfDay.sync="scheduledDates" @selectDay.user="onDateSelected" />
 
     <view class="order-list">
-      <view class="card" wx:for="{{selectedDateBookings}}" wx:key="item.id">
+      <view class="card" wx:for="{{selectedDateBookings}}" wx:key="id">
         <view class="summary">
-          <view class="title">{{item.service.name}}</view>
+          <view class="title">{{item.gymService.name}}</view>
           <view class="title">
-            <view class="store">{{item.gym.name}}</view>
-            <view class="status">{{date.format(item.bookingDate, 'HH:mm')}}</view>
+            <view class="store">{{item.gymService.gym.name}}</view>
+            <view class="status">{{date.format(item.time, 'HH:mm')}}</view>
           </view>
         </view>
       </view>
-      <view class="card" wx:for="{{selectedDateFoodOrders}}" wx:key="item.id">
+      <view class="card" wx:for="{{selectedDateFoodOrders}}" wx:key="id">
         <view class="summary">
           <view class="title">{{item.details.foods[0].name}}</view>
           <view class="title">
@@ -98,12 +98,14 @@ export default class extends wepy.page {
       supper: '晚餐'
     },
     selectedDate: moment().format('YYYY-MM-DD'),
-    dialogOpen: false
+    dialogOpen: false,
+    qrscanContent: '',
+    checkQrscanTimer: null
   }
 
   computed = {
     scheduledDates() {
-      const bookings = _.groupBy(this.bookings, x => moment(x.bookingDate).format('YYYY-MM-DD'))
+      const bookings = _.groupBy(this.bookings, x => moment(x.time).format('YYYY-MM-DD'))
       const foodOrders = _.groupBy(this.foodOrders, x => moment(x.details.arriveDate).format('YYYY-MM-DD'))
 
       const all = _.mergeWith(bookings, foodOrders, (x, y) => {
@@ -120,7 +122,7 @@ export default class extends wepy.page {
       })
     },
     selectedDateBookings() {
-      return _.filter(this.bookings, x => moment(x.bookingDate).isSame(this.selectedDate, 'day'))
+      return _.filter(this.bookings, x => moment(x.time).isSame(this.selectedDate, 'day'))
     },
     selectedDateFoodOrders() {
       return _.filter(this.foodOrders, x => moment(x.details.arriveDate).isSame(this.selectedDate, 'day'))
@@ -128,16 +130,29 @@ export default class extends wepy.page {
   }
 
   methods = {
+    doNothing() {},
     onDateSelected(date) {
       this.selectedDate = date
     },
     openSetting() {
       wepy.setEnableDebug({ enableDebug: true })
     },
-    openQrCode() {
+    async openQrCode() {
       this.dialogOpen = true
+      const { code } = await wepy.login()
+      const content = `inout,${code}`
+      drawQrcode({
+        width: 200,
+        height: 200,
+        canvasId: 'qrcode',
+        text: content
+      })
+      this.qrscanContent = content
+      this.$apply()
+      this.checkQrscan()
     },
     closeDialog() {
+      clearTimeout(this.checkQrscanTimer)
       this.dialogOpen = false
     },
     favor() {
@@ -145,20 +160,44 @@ export default class extends wepy.page {
     }
   }
 
+  async checkQrscan() {
+    const order = await API.getInstrumentOrderByTicket(this.qrscanContent)
+    if (!order) {
+      this.checkQrscanTimer = setTimeout(() => this.checkQrscan(), 1000)
+      return
+    }
+
+    const { inTime, outTime } = order
+    if (outTime) {
+      wepy.showToast({ title: '出场成功' })
+      return
+    }
+
+    if (inTime) {
+      wepy.showToast({ title: '入场成功' })
+    }
+
+    this.dialogOpen = false
+    this.$apply()
+  }
+
   async loadBookings() {
     this.bookings = await API.getBookings()
-    this.foodOrders = await API.getFoodOrders()
     this.$apply()
   }
 
   onShow() {
+    this.loadBookings()
     drawQrcode({
       width: 200,
       height: 200,
       canvasId: 'qrcode',
-      text: 'https://github.com/princescar/ukase-wepy'
+      text: 'qrcode'
     })
-    this.loadBookings()
+  }
+
+  onHide() {
+    this.methods.closeDialog()
   }
 }
 </script>

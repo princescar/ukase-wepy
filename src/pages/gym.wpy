@@ -30,7 +30,7 @@
       {{gym.address}}
     </view>
     <view class="sport-list">
-      <view class="sport" wx:for="{{sports}}" wx:key="item.id">
+      <view class="sport" wx:for="{{sports}}" wx:key="id">
         <view class="wrapper">
           <view class="title">{{item.name}}</view>
           <view class="description">{{item.description}}</view>

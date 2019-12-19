@@ -1,15 +1,15 @@
 import wepy from 'wepy'
 import querystring from 'querystring'
-import Leancloud from 'leancloud-storage'
+import LeanCloud from 'leancloud-storage'
 
 const BASE_URL = 'https://api.hmc000.com'
 
 export default {
   login() {
-    return Leancloud.User.loginWithWeapp()
+    return LeanCloud.User.loginWithWeapp()
   },
   searchGyms({ location, distance, sortBy, filters, pagination } = {}) {
-    const query = new Leancloud.Query('Gym')
+    const query = new LeanCloud.Query('Gym')
     if (location) {
       query.near('location', location)
       if (distance) {
@@ -73,44 +73,43 @@ export default {
     return get('/searchFoods', query)
   },
   async getGym(id) {
-    const query = new Leancloud.Query('Gym')
+    const query = new LeanCloud.Query('Gym')
     query.include('region')
     const gym = await query.get(id)
-    return Object.assign(gym.toJSON(), {
-      id
-    })
+    return parseId(gym)
   },
   async getGymImages(id) {
-    const query = new Leancloud.Query('GymImage')
-    const gym = Leancloud.Object.createWithoutData('Gym', id)
+    const query = new LeanCloud.Query('GymImage')
+    const gym = LeanCloud.Object.createWithoutData('Gym', id)
     query.equalTo('gym', gym)
-    const images = await query.find()
-    return images.map(x => x.get('image'))
+    const gymImages = await query.find()
+    return gymImages.map(x => x.get('image').toJSON())
   },
   async getGymSports(id) {
-    const query = new Leancloud.Query('GymService')
-    const gym = Leancloud.Object.createWithoutData('Gym', id)
+    const query = new LeanCloud.Query('GymService')
+    const gym = LeanCloud.Object.createWithoutData('Gym', id)
     query.equalTo('gym', gym)
     const sports = await query.find()
-    return sports.map(x => {
-      const id = x.get('objectId')
-      return Object.assign(x.toJSON(), {
-        id
-      })
-    })
+    return sports.map(parseId)
   },
   getFood(id) {
     return get(`/foods/${id}`)
   },
   newBooking(serviceId, bookingDateTime, mobile) {
-    const booking = new Leancloud.Object('GymServiceBooking')
-    const service = Leancloud.Object.createWithoutData('GymService', serviceId)
+    const booking = new LeanCloud.Object('GymServiceBooking')
+    const service = LeanCloud.Object.createWithoutData('GymService', serviceId)
     booking.set('gymService', service)
-
-    return post('/bookings', { serviceId, bookingDateTime, mobile })
+    booking.set('user', LeanCloud.User.current())
+    booking.set('time', bookingDateTime)
+    booking.set('mobile', mobile)
+    return booking.save()
   },
-  getBookings() {
-    return get('/bookings')
+  async getBookings() {
+    const query = new LeanCloud.Query('GymServiceBooking')
+    query.equalTo('user', LeanCloud.User.current())
+    query.include('gymService.gym')
+    const bookings = await query.find()
+    return bookings.map(parseId)
   },
   newDiet(foods, supplierId, arriveDate) {
     return put('/checkout', { foods, supplierId, arriveDate })
@@ -138,7 +137,28 @@ export default {
   },
   getFavorSuppliers() {
     return get('/suppliers/favor')
+  },
+  async getInstrumentOrderByTicket(ticket) {
+    const inQuery = new LeanCloud.Query('GymInstrumentOrder')
+    inQuery.equalTo('inTicket', ticket)
+
+    const outQuery = new LeanCloud.Query('GymInstrumentOrder')
+    outQuery.equalTo('outTicket', ticket)
+
+    const query = LeanCloud.Query.or(inQuery, outQuery)
+    const order = await query.first()
+
+    if (!order) {
+      return null
+    }
+
+    return parseId(order)
   }
+}
+
+function parseId(x) {
+  const id = x.get('objectId')
+  return Object.assign(x.toJSON(), { id })
 }
 
 function get(url, query) {

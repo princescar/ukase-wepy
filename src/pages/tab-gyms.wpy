@@ -37,7 +37,7 @@
           </view>
         </view>
         <view class="list">
-          <view class="item" wx:for="{{gyms}}" wx:key="item.id" @tap="detail({{item}})">
+          <view class="item" wx:for="{{gyms}}" wx:key="id" @tap="detail({{item}})">
             <image src="{{item.thumbnail.url}}" mode="aspectFill" />
             <view class="summary">
               <view>
@@ -145,7 +145,7 @@ export default class extends wepy.page {
 
 <style lang="scss">
 .container {
-  background-color: #f8f8f8;
+  background-color: #fff;
 }
 
 .banner {
