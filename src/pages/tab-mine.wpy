@@ -99,7 +99,7 @@ export default class extends wepy.page {
     },
     selectedDate: moment().format('YYYY-MM-DD'),
     dialogOpen: false,
-    qrscanContent: '',
+    ticket: '',
     checkQrscanTimer: null
   }
 
@@ -140,14 +140,13 @@ export default class extends wepy.page {
     async openQrCode() {
       this.dialogOpen = true
       const { code } = await wepy.login()
-      const content = `inout,${code}`
+      this.ticket = code
       drawQrcode({
         width: 200,
         height: 200,
         canvasId: 'qrcode',
-        text: content
+        text: `inout,${this.ticket}`
       })
-      this.qrscanContent = content
       this.$apply()
       this.checkQrscan()
     },
@@ -161,7 +160,7 @@ export default class extends wepy.page {
   }
 
   async checkQrscan() {
-    const order = await API.getInstrumentOrderByTicket(this.qrscanContent)
+    const order = await API.getInstrumentOrderByTicket(this.ticket)
     if (!order) {
       this.checkQrscanTimer = setTimeout(() => this.checkQrscan(), 1000)
       return
@@ -170,11 +169,8 @@ export default class extends wepy.page {
     const { inTime, outTime } = order
     if (outTime) {
       wepy.showToast({ title: '出场成功' })
-      return
-    }
-
-    if (inTime) {
-      wepy.showToast({ title: '入场成功' })
+    } else if (inTime) {
+      wepy.showToast({ title: '入场成功，开始计时' })
     }
 
     this.dialogOpen = false
