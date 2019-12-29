@@ -138,7 +138,7 @@ export default {
   getFavorSuppliers() {
     return get('/suppliers/favor')
   },
-  async getInstrumentOrderByTicket(ticket) {
+  async getOrderByTicket(ticket) {
     const inQuery = new LeanCloud.Query('GymInstrumentOrder')
     inQuery.equalTo('inTicket', ticket)
 
@@ -153,6 +153,29 @@ export default {
     }
 
     return parseId(order)
+  },
+  async getUnfinishedOrder() {
+    const query = new LeanCloud.Query('GymInstrumentOrder')
+    query.equalTo('status', 'open')
+    query.descending('createdAt')
+    const order = await query.first()
+    if (!order) {
+      return null
+    }
+    return parseId(order)
+  },
+  async getUnfinishedPayment(orderId) {
+    const order = LeanCloud.Object.createWithoutData('GymInstrumentOrder', orderId)
+    const query = new LeanCloud.Query('GymInstrumentOrderPayment')
+    query.equalTo('order', order)
+    query.equalTo('paid', false)
+    query.equalTo('type', 'wechat')
+    query.descending('createdAt')
+    const payment = await query.first()
+    if (!payment) {
+      return null
+    }
+    return parseId(payment)
   }
 }
 
@@ -163,10 +186,6 @@ function parseId(x) {
 
 function get(url, query) {
   return request('GET', url, query)
-}
-
-function post(url, data, query) {
-  return request('POST', url, query, data)
 }
 
 function put(url, data, query) {
