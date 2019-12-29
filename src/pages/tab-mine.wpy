@@ -139,13 +139,18 @@ export default class extends wepy.page {
     },
     async openQrCode() {
       this.dialogOpen = true
+      let action = 'enter'
+      const order = await API.getUnfinishedOrder()
+      if (order) {
+        action = 'leave'
+      }
       const { code } = await wepy.login()
       this.ticket = code
       drawQrcode({
         width: 200,
         height: 200,
         canvasId: 'qrcode',
-        text: `inout,${this.ticket}`
+        text: `${action}|${this.ticket}`
       })
       this.$apply()
       this.checkQrscan()
