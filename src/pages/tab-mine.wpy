@@ -53,7 +53,7 @@
         <view class="close" @tap="closeDialog" />
         <view class="head">
           <view class="title">
-            个人二维码
+            {{ action === 'enter' ? '入场扫码' : '出场扫码' }}
           </view>
         </view>
         <view class="body">
@@ -99,6 +99,7 @@ export default class extends wepy.page {
     },
     selectedDate: moment().format('YYYY-MM-DD'),
     dialogOpen: false,
+    action: 'enter',
     ticket: '',
     checkQrscanTimer: null
   }
@@ -138,19 +139,19 @@ export default class extends wepy.page {
       wepy.setEnableDebug({ enableDebug: true })
     },
     async openQrCode() {
-      this.dialogOpen = true
-      let action = 'enter'
+      this.action = 'enter'
       const order = await API.getUnfinishedOrder()
       if (order) {
-        action = 'leave'
+        this.action = 'leave'
       }
+      this.dialogOpen = true
       const { code } = await wepy.login()
       this.ticket = code
       drawQrcode({
         width: 200,
         height: 200,
         canvasId: 'qrcode',
-        text: `${action}|${this.ticket}`
+        text: `${this.action}|${this.ticket}`
       })
       this.$apply()
       this.checkQrscan()
