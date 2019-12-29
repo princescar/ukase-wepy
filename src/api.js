@@ -22,7 +22,8 @@ export default {
       }
     }
     if (sortBy) {
-      if (sortBy.direction === 'asc') {
+      if (sortBy.key === 'distance') {
+      } else if (sortBy.direction === 'asc') {
         query.ascending(sortBy.key)
       } else {
         query.descending(sortBy.key)

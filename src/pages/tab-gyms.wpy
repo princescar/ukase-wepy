@@ -94,12 +94,12 @@ export default class extends wepy.page {
     ],
     distanceIndex: 3,
     sortings: [
-      { label: '推荐优先', value: { key: 'weight', direction: 'desc' } },
+      { label: '距离优先', value: { key: 'distance', direction: 'asc' } },
       { label: '评分优先', value: { key: 'rating', direction: 'desc' } },
-      { label: '低价优先', value: { key: 'startPrice', direction: 'asc' } },
-      { label: '高价优先', value: { key: 'startPrice', direction: 'desc' } }
+      { label: '低价优先', value: { key: 'hourlyPrice', direction: 'asc' } },
+      { label: '高价优先', value: { key: 'hourlyPrice', direction: 'desc' } }
     ],
-    sortingIndex: 1,
+    sortingIndex: 0,
     hasUserLocation: false
   }
 
