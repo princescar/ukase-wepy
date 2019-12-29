@@ -156,7 +156,7 @@ export default {
   },
   async getUnfinishedOrder() {
     const query = new LeanCloud.Query('GymInstrumentOrder')
-    query.equalTo('status', 'open')
+    query.equalTo('status', 'new')
     query.descending('createdAt')
     const order = await query.first()
     if (!order) {
