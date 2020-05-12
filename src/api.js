@@ -43,7 +43,8 @@ export default {
       itemCode,
       itemChargeCode,
       reserveTime,
-      reservePhone
+      reservePhone,
+      reserveName: '张三'
     })
   },
   async getBookings() {
