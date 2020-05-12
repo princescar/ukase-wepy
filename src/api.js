@@ -2,53 +2,35 @@ import wepy from 'wepy'
 import querystring from 'querystring'
 import LeanCloud from 'leancloud-storage'
 
-const BASE_URL = 'https://api.hmc000.com'
+const BASE_URL = 'http://121.196.32.76:9001'
 
 export default {
-  login() {
-    return LeanCloud.User.loginWithWeapp()
+  login(code) {
+    return get('/user/code', { code })
+  },
+  getBanners() {
+    return get('/banner/list')
   },
   searchGyms({ location, distance, sortBy, filters, pagination } = {}) {
-    const query = new LeanCloud.Query('Gym')
+    const params = {}
     if (location) {
-      query.near('location', location)
-      if (distance) {
-        query.withinKilometers('location', location, distance.max / 1000)
-      }
+      params.longitude = location.longitude
+      params.latitude = location.latitude
     }
-    if (filters) {
-      for (const key in filters) {
-        query.equalTo(key, filters[key])
-      }
+    if (distance) {
+      params.maxDistance = distance
     }
     if (sortBy) {
-      if (sortBy.key === 'distance') {
-      } else if (sortBy.direction === 'asc') {
-        query.ascending(sortBy.key)
-      } else {
-        query.descending(sortBy.key)
-      }
+      params.sortType = sortBy.key
     }
     if (pagination) {
-      query.skip(pagination.pageNo * pagination.pageSize)
-      query.limit(pagination.pageSize)
+      params.pageIndex = pagination.pageIndex
+      params.pageSize = pagination.pageSize
+    } else {
+      params.pageIndex = 1
+      params.pageSize = 999
     }
-    query.include('region')
-
-    return query.find().then(gyms => {
-      return gyms.map(x => {
-        const id = x.get('objectId')
-        const loc = x.get('location')
-        let distance
-        if (location) {
-          distance = loc.kilometersTo(location) * 1000
-        }
-        return Object.assign(x.toJSON(), {
-          id,
-          distance
-        })
-      })
-    })
+    return get('/gym/page', params)
   },
   searchFoods({ heat, price, sortBy, filters, pagination } = {}) {
     let query = {}
@@ -73,11 +55,8 @@ export default {
     }
     return get('/searchFoods', query)
   },
-  async getGym(id) {
-    const query = new LeanCloud.Query('Gym')
-    query.include('region')
-    const gym = await query.get(id)
-    return parseId(gym)
+  async getGym(gymCode) {
+    return get('/gym/detail', { gymCode })
   },
   async getGymImages(id) {
     const query = new LeanCloud.Query('GymImage')
@@ -200,7 +179,9 @@ function request(method, url, query, body) {
     fullUrl += `?${qs}`
   }
   const token = wx.getStorageSync('token')
-  const header = token ? { Authorization: `Bearer ${token}` } : {}
+  if (body) {
+    body.userId = token
+  }
 
   console.debug(method)
   console.debug(fullUrl)
@@ -211,7 +192,6 @@ function request(method, url, query, body) {
     .request({
       method: method,
       url: fullUrl,
-      header: header,
       data: body
     })
     .catch(error => {
@@ -219,11 +199,11 @@ function request(method, url, query, body) {
       throw new Error(error.errMsg)
     })
     .then(resp => {
-      if (resp.data && resp.data.error) {
-        showError(resp.data.error)
-        throw new Error(resp.data.error)
+      if (resp.data && resp.data.code !== '200') {
+        showError(resp.data.msg)
+        throw new Error(resp.data.code)
       } else {
-        return resp.data
+        return resp.data.data
       }
     })
 }

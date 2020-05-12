@@ -3,11 +3,11 @@
     <header>
       <view slot="children" class="banner">
         <swiper indicator-dots="{{true}}" indicator-active-color="#fff" autoplay="{{true}}" circular="{{true}}">
-          <swiper-item wx:for="{{images}}" wx:key="item">
-            <view class="image" style="background-image: url('{{item.url}}');"/>
+          <swiper-item wx:for="{{gym.images}}" wx:key="id">
+            <view class="image" style="background-image: url('{{item.gymImage}}');"/>
           </swiper-item>
         </swiper>
-        <view class="image-count">{{images.length}}</view>
+        <view class="image-count">{{gym.images.length}}</view>
       </view>
     </header>
     <view class="card">
@@ -21,8 +21,14 @@
       </view>
       <view class="note">
         营业时间：{{gym.openTime}}-{{gym.closeTime}}
-        {{gym.region.name}}
+        {{gym.district}}
         {{gym.category}}
+      </view>
+      <view class="note">
+        自由锻练：
+        <view wx:for="{{gym.lessonItems}}" wx:key="itemChargeCode">
+          {{item.chargeStartTime}}-{{item.chargeEndTime}} {{item.chargePrice}}元/小时
+        </view>
       </view>
       <view class="description">{{gym.description}}</view>
     </view>
@@ -30,10 +36,11 @@
       {{gym.address}}
     </view>
     <view class="sport-list">
-      <view class="sport" wx:for="{{sports}}" wx:key="id">
+      <view class="sport" wx:for="{{gym.lessonItems}}" wx:key="itemChargeCode">
         <view class="wrapper">
-          <view class="title">{{item.name}}</view>
+          <view class="title">{{item.itemName}}</view>
           <view class="description">{{item.description}}</view>
+          <view class="description">{{item.chargePrice}}元/{{item.itemDuration}}分钟</view>
         </view>
         <view class="book" @tap="book({{item}})">
           预定
@@ -108,8 +115,6 @@ export default class extends wepy.page {
   data = {
     id: null,
     gym: null,
-    images: [],
-    sports: [],
     dialogOpen: false,
     selectedSport: null,
     mobile: null,
@@ -134,8 +139,8 @@ export default class extends wepy.page {
     },
     showMap() {
       wepy.openLocation({
-        latitude: this.gym.location.latitude,
-        longitude: this.gym.location.longitude,
+        latitude: parseFloat(this.gym.latitude),
+        longitude: parseFloat(this.gym.longitude),
         name: this.gym.name,
         address: this.gym.address
       })
@@ -186,21 +191,9 @@ export default class extends wepy.page {
     this.$apply()
   }
 
-  async loadImages() {
-    this.images = await API.getGymImages(this.id)
-    this.$apply()
-  }
-
-  async loadSports() {
-    this.sports = await API.getGymSports(this.id)
-    this.$apply()
-  }
-
   onLoad(opts) {
     this.id = opts.id
     this.loadData()
-    this.loadImages()
-    this.loadSports()
   }
 }
 </script>

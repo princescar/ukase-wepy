@@ -5,8 +5,8 @@
       <view class="wrapper">
         <view class="banner">
           <swiper indicator-dots="{{true}}" indicator-active-color="#fff" autoplay="{{true}}" circular="{{true}}">
-            <swiper-item wx:for="{{bannerImages}}" wx:key="item">
-              <view class="image" style="background-image: url('{{item}}');"/>
+            <swiper-item wx:for="{{banners}}" wx:key="id">
+              <view class="image" style="background-image: url('{{item.bannerUrl}}');"/>
             </swiper-item>
           </swiper>
           <!-- <search-bar>健身房</search-bar> -->
@@ -38,7 +38,7 @@
         </view>
         <view class="list">
           <view class="item" wx:for="{{gyms}}" wx:key="id" @tap="detail({{item}})">
-            <image src="{{item.thumbnail.url}}" mode="aspectFill" />
+            <image src="{{item.thumbnail}}" mode="aspectFill" />
             <view class="summary">
               <view>
                 <view class="title">{{item.name}}</view>
@@ -46,7 +46,7 @@
               </view>
               <view class="note">
                 <view>
-                  {{item.region.name}}
+                  {{item.district}}
                   {{item.category}}
                 </view>
                 <view wx:if="{{hasUserLocation}}">{{distance.format(item.distance)}}</view>
@@ -79,12 +79,7 @@ export default class extends wepy.page {
   }
 
   data = {
-    bannerImages: [
-      'https://i.loli.net/2018/10/13/5bc1e963e155e.jpg',
-      'https://i.loli.net/2018/10/13/5bc1e963e8798.jpg',
-      'https://i.loli.net/2018/10/13/5bc1e963ef47a.jpg',
-      'https://i.loli.net/2018/10/13/5bc1e964343c6.jpg'
-    ],
+    banners: [],
     gyms: [],
     distances: [
       { label: '附近3km', value: { max: 3000, min: 0 } },
@@ -105,7 +100,7 @@ export default class extends wepy.page {
 
   methods = {
     detail(item) {
-      wepy.navigateTo({ url: `gym?id=${item.id}` })
+      wepy.navigateTo({ url: `gym?id=${item.gymCode}` })
     },
     onRangeChanged(e) {
       if (!this.hasUserLocation) {
@@ -121,6 +116,11 @@ export default class extends wepy.page {
     }
   }
 
+  async loadBanners() {
+    this.banners = await API.getBanners()
+    this.$apply()
+  }
+
   async loadData() {
     let location = null
     try {
@@ -129,15 +129,17 @@ export default class extends wepy.page {
     } catch (e) {
       this.hasUserLocation = false
     }
-    this.gyms = await API.searchGyms({
+    const { rows } = await API.searchGyms({
       location,
       distance: this.distances[this.distanceIndex].value,
       sortBy: this.sortings[this.sortingIndex].value
     })
+    this.gyms = rows
     this.$apply()
   }
 
   onShow() {
+    this.loadBanners()
     this.loadData()
   }
 }
