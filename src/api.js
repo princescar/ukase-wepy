@@ -1,6 +1,5 @@
 import wepy from 'wepy'
 import querystring from 'querystring'
-import LeanCloud from 'leancloud-storage'
 
 const BASE_URL = 'http://121.196.32.76:9001'
 
@@ -32,57 +31,20 @@ export default {
     }
     return get('/gym/page', params)
   },
-  searchFoods({ heat, price, sortBy, filters, pagination } = {}) {
-    let query = {}
-    if (heat) {
-      query.heat = toRangeString(heat)
-    }
-    if (price) {
-      query.price = toRangeString(price)
-    }
-    if (filters) {
-      Object.assign(query, filters)
-    }
-    if (sortBy) {
-      const sign = {
-        asc: '+',
-        desc: '-'
-      }[sortBy.direction]
-      query.sort = `${sign}${sortBy.key}`
-    }
-    if (pagination) {
-      Object.assign(query, pagination)
-    }
-    return get('/searchFoods', query)
-  },
   async getGym(gymCode) {
     return get('/gym/detail', { gymCode })
   },
-  async getGymImages(id) {
-    const query = new LeanCloud.Query('GymImage')
-    const gym = LeanCloud.Object.createWithoutData('Gym', id)
-    query.equalTo('gym', gym)
-    const gymImages = await query.find()
-    return gymImages.map(x => x.get('image').toJSON())
+  async getGymItem(itemChargeCode) {
+    return get('/gymItem/detail', { itemChargeCode })
   },
-  async getGymSports(id) {
-    const query = new LeanCloud.Query('GymService')
-    const gym = LeanCloud.Object.createWithoutData('Gym', id)
-    query.equalTo('gym', gym)
-    const sports = await query.find()
-    return sports.map(parseId)
-  },
-  getFood(id) {
-    return get(`/foods/${id}`)
-  },
-  newBooking(serviceId, bookingDateTime, mobile) {
-    const booking = new LeanCloud.Object('GymServiceBooking')
-    const service = LeanCloud.Object.createWithoutData('GymService', serviceId)
-    booking.set('gymService', service)
-    booking.set('user', LeanCloud.User.current())
-    booking.set('time', bookingDateTime)
-    booking.set('mobile', mobile)
-    return booking.save()
+  newBooking(gymCode, itemCode, itemChargeCode, reserveTime, reservePhone) {
+    return post('/userOrder/createPreOrder', {
+      gymCode,
+      itemCode,
+      itemChargeCode,
+      reserveTime,
+      reservePhone
+    })
   },
   async getBookings() {
     const query = new LeanCloud.Query('GymServiceBooking')
@@ -91,32 +53,15 @@ export default {
     const bookings = await query.find()
     return bookings.map(parseId)
   },
-  newDiet(foods, supplierId, arriveDate) {
-    return put('/checkout', { foods, supplierId, arriveDate })
-  },
-  getDiet(from, to) {
-    return get('/diet', { from, to })
-  },
-  getFoodOrders() {
-    return get('/orders?page=1&size=9999')
-  },
-  setFoodFavor(foodId, favor) {
-    return put(`/foods/${foodId}/favor`, favor)
-  },
-  setGymFavor(gymId, favor) {
-    return put(`/gyms/${gymId}/favor`, favor)
-  },
-  setSupplierFavor(supplierId, favor) {
-    return put(`/suppliers/${supplierId}/favor`, favor)
-  },
-  getFavorFoods() {
-    return get('/foods/favor')
+  setGymFavor(gymCode, favor) {
+    if (favor) {
+      return post('/userFav/add', { gymCode })
+    } else {
+      return post('/userFav/delete', { gymCode })
+    }
   },
   getFavorGyms() {
     return get('/gyms/favor')
-  },
-  getFavorSuppliers() {
-    return get('/suppliers/favor')
   },
   async getOrderByTicket(ticket) {
     const inQuery = new LeanCloud.Query('GymInstrumentOrder')
@@ -159,26 +104,23 @@ export default {
   }
 }
 
-function parseId(x) {
-  const id = x.get('objectId')
-  return Object.assign(x.toJSON(), { id })
-}
-
 function get(url, query) {
   return request('GET', url, query)
 }
 
-function put(url, data, query) {
-  return request('PUT', url, query, data)
+function post(url, data, query) {
+  return request('POST', url, query, data)
 }
 
 function request(method, url, query, body) {
   let fullUrl = BASE_URL + url
+  const token = wx.getStorageSync('token')
+
   if (query) {
+    query.userId = token
     const qs = querystring.stringify(query)
     fullUrl += `?${qs}`
   }
-  const token = wx.getStorageSync('token')
   if (body) {
     body.userId = token
   }
@@ -210,12 +152,8 @@ function request(method, url, query, body) {
 
 function showError(error) {
   wepy.showModal({
-    title: '发生错误',
+    title: '错误',
     content: error,
     showCancel: false
   })
-}
-
-function toRangeString(range) {
-  return `lt:${range.max},gt:${range.min}`
 }

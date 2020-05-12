@@ -14,19 +14,19 @@
       <view class="title">
         <view>
           {{gym.name}}
-          <!-- <rating :score="gym.rating" /> -->
+          <view class="rating star-{{gym.rating}}"/>
         </view>
-        <view wx:if="{{!gym.favor}}" class="icon favor" @tap="toggleFavor" />
-        <view wx:if="{{gym.favor}}" class="icon unfavor" @tap="toggleFavor" />
+        <view wx:if="{{!gym.favFlag}}" class="icon favor" @tap="toggleFavor" />
+        <view wx:if="{{gym.favFlag}}" class="icon unfavor" @tap="toggleFavor" />
       </view>
       <view class="note">
         营业时间：{{gym.openTime}}-{{gym.closeTime}}
         {{gym.district}}
         {{gym.category}}
       </view>
-      <view class="note">
+      <view class="note" wx:if="{{gym.normalItems && gym.normalItems.length > 0}}">
         自由锻练：
-        <view wx:for="{{gym.lessonItems}}" wx:key="itemChargeCode">
+        <view wx:for="{{gym.normalItems}}" wx:key="itemChargeCode">
           {{item.chargeStartTime}}-{{item.chargeEndTime}} {{item.chargePrice}}元/小时
         </view>
       </view>
@@ -47,59 +47,11 @@
         </view>
       </view>
     </view>
-    <view class="{{'dialog-wrapper' + (dialogOpen ? ' show' : '')}}" @tap="closeDialog">
-      <view class="dialog" @tap.stop="doNothing">
-        <view class="close" @tap="closeDialog" />
-        <view class="head">
-          <view class="title">
-            {{selectedSport.name}}
-          </view>
-        </view>
-        <view class="body">
-          <view class="form-item">
-            <view class="label">预定日期</view>
-            <picker
-              class="date-picker"
-              mode="date"
-              value="{{selectedDate}}"
-              start="{{startDate}}"
-              end="{{endDate}}"
-              @change="changeDate"
-            >
-              {{selectedDate}}
-              <view class="icon triangle"/>
-            </picker>
-          </view>
-          <view class="form-item">
-            <view class="label">预定时间</view>
-            <picker
-              class="date-picker"
-              mode="time"
-              value="{{selectedTime}}"
-              @change="changeTime"
-            >
-              {{selectedTime}}
-              <view class="icon triangle"/>
-            </picker>
-          </view>
-          <view class="form-item">
-            <view class="label">预定人手机号</view>
-            <input class="input" value="{{mobile}}" @change="changeMobile" type="number" placeholder="请输入手机号" />
-          </view>
-        </view>
-        <view class="actions">
-          <view class="button primary" @tap="confirmBook">
-            预定
-          </view>
-        </view>
-      </view>
-    </view>
   </view>
 </template>
 
 <script>
 import wepy from 'wepy'
-import moment from 'moment'
 import API from '../api'
 import Header from '../components/header'
 
@@ -114,23 +66,16 @@ export default class extends wepy.page {
 
   data = {
     id: null,
-    gym: null,
-    dialogOpen: false,
-    selectedSport: null,
-    mobile: null,
-    startDate: moment().format('YYYY-MM-DD'),
-    endDate: moment().add(1, 'week').format('YYYY-MM-DD'),
-    selectedDate: moment().add(1, 'day').format('YYYY-MM-DD'),
-    selectedTime: '20:00'
+    gym: null
   }
 
   methods = {
     doNothing() {},
     async toggleFavor() {
-      this.gym.favor = !this.gym.favor
-      const { id, favor } = this.gym
-      await API.setGymFavor(id, favor)
-      const title = this.gym.favor ? '已收藏' : '已取消收藏'
+      this.gym.favFlag = !this.gym.favFlag
+      const { gymCode, favFlag } = this.gym
+      await API.setGymFavor(gymCode, favFlag)
+      const title = favFlag ? '已收藏' : '已取消收藏'
       wepy.showToast({ title, icon: 'none' })
       this.$apply()
     },
@@ -146,47 +91,11 @@ export default class extends wepy.page {
       })
     },
     book(item) {
-      this.selectedSport = item
-      this.selectedDate = moment().add(1, 'day').format('YYYY-MM-DD')
-      this.selectedTime = '20:00'
-      this.dialogOpen = true
-    },
-    changeDate(e) {
-      this.selectedDate = e.detail.value
-    },
-    changeTime(e) {
-      this.selectedTime = e.detail.value
-    },
-    changeMobile(e) {
-      this.mobile = e.detail.value
-    },
-    async confirmBook() {
-      if (!this.selectedDate) {
-        wepy.showToast({ title: '请选择预定日期', icon: 'none' })
-        return
-      }
-      if (!this.selectedTime) {
-        wepy.showToast({ title: '请选择预定时间', icon: 'none' })
-        return
-      }
-      if (!/1\d{10}/.test(this.mobile)) {
-        wepy.showToast({ title: '请填写预定人手机号', icon: 'none' })
-        return
-      }
-      const selectedDateTime = moment(this.selectedDate + ' ' + this.selectedTime).toDate()
-      await API.newBooking(this.selectedSport.id, selectedDateTime, this.mobile)
-      wepy.setStorageSync('mobile', this.mobile)
-      wepy.showToast({ title: '预定成功！', icon: 'success', duration: 3000 })
-      setTimeout(() => {
-        this.dialogOpen = false
-        this.$apply()
-        wepy.navigateBack()
-      }, 3000)
+      wepy.navigateTo({ url: `/pages/gym-item?id=${item.itemChargeCode}` })
     }
   }
 
   async loadData() {
-    this.mobile = wepy.getStorageSync('mobile')
     this.gym = await API.getGym(this.id)
     this.$apply()
   }
@@ -260,6 +169,29 @@ export default class extends wepy.page {
       }
     }
   }
+  .rating {
+    height: 16px;
+    margin: 5px;
+    background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#ff6e00" d="M19,3H5C3.895,3,3,3.895,3,5v14c0,1.105,0.895,2,2,2h14c1.105,0,2-0.895,2-2V5C21,3.895,20.105,3,19,3z M16.23,18L12,15.45 L7.77,18l1.12-4.81L5.16,9.96l4.92-0.42L12,5l1.92,4.53l4.92,0.42l-3.73,3.23L16.23,18z"/></svg>');
+    background-size: 16px 16px;
+    background-repeat: repeat-x;
+    background-position: left center;
+    &.star-1 {
+      width: 16px;
+    }
+    &.star-2 {
+      width: 32px;
+    }
+    &.star-3 {
+      width: 48px;
+    }
+    &.star-4 {
+      width: 64px;
+    }
+    &.star-5 {
+      width: 80px;
+    }
+  }
   .note {
     margin-top: 5px;
     margin-bottom: 15px;
@@ -309,38 +241,4 @@ export default class extends wepy.page {
     }
   }
 }
-
-.dialog-wrapper > .dialog {
-  bottom: unset;
-  top: 20vh;
-  left: 10px;
-  right: 10px;
-  &>.body {
-    padding: 15px;
-    .form-item {
-      margin: 15px;
-      border-bottom: 1rpx solid #E6E6E6;
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      .label {
-        width: 100px;
-        font-size: 12px;
-        color: #9B9B9B;
-      }
-      .date-picker {
-        flex: 1;
-        padding: 5px;
-        font-size: 16px;
-      }
-      .input {
-        flex: 1;
-        -webkit-appearance: none;
-        padding: 5px;
-        font-size: 16px;
-      }
-    }
-  }
-}
-
 </style>

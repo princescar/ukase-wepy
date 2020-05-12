@@ -3,14 +3,7 @@ import wepy from 'wepy'
 import 'wepy-async-function'
 import moment from 'moment'
 import 'moment/locale/zh-cn'
-import Leancloud from 'leancloud-storage'
 import Device from './services/device'
-
-Leancloud.init({
-  appId: 'BKj9HG5LK4x5j0LpU5hANBLw-gzGzoHsz',
-  appKey: 'JrbctFiCeRLPfNPdKeSmoLjQ',
-  serverURLs: 'https://data.hmc000.com'
-})
 
 export default class extends wepy.app {
   config = {
@@ -27,6 +20,7 @@ export default class extends wepy.app {
       'pages/tab-mine',
       'pages/confirm-order',
       'pages/gym',
+      'pages/gym-item',
       'pages/food',
       'pages/favorite'
     ],
