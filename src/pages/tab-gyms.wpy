@@ -157,6 +157,7 @@ export default class extends wepy.page {
   }
 
   onShow() {
+    wepy.showTabBar()
     this.loadBanners()
     this.loadData()
   }

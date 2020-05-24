@@ -19,11 +19,14 @@ export default class extends wepy.app {
       'pages/tab-gyms',
       'pages/tab-foods',
       'pages/tab-mine',
+      'pages/tab-scan',
       'pages/confirm-order',
       'pages/gym',
       'pages/gym-item',
       'pages/food',
-      'pages/favorite'
+      'pages/favorite',
+      'pages/enter',
+      'pages/leave'
     ],
     tabBar: {
       color: '#7C7C7C',
@@ -36,6 +39,12 @@ export default class extends wepy.app {
           text: '健身中心',
           iconPath: 'images/tab-gym.png',
           selectedIconPath: 'images/tab-gym-d.png'
+        },
+        {
+          pagePath: 'pages/tab-scan',
+          text: '出入扫码',
+          iconPath: 'images/tab-scan.png',
+          selectedIconPath: 'images/tab-scan-d.png'
         },
         {
           pagePath: 'pages/tab-mine',

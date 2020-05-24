@@ -1,0 +1,68 @@
+<template>
+  <view class="container" />
+</template>
+
+<script>
+import wepy from 'wepy'
+import API from '../api'
+
+export default class extends wepy.page {
+  data = {
+    inScan: false
+  }
+
+  async scanCode() {
+    try {
+      this.inScan = true
+      const res = await wepy.scanCode({
+        onlyFromCamera: true,
+        scanType: 'qrCode'
+      })
+      const { result } = res
+      console.log(result)
+
+      // DEBUG
+      const gymCode = 'GYM00001'
+
+      if (!gymCode) {
+        throw new Error('cannot parse gym code')
+      }
+
+      const { canEnterInto } = await API.preEntranceCheck(gymCode)
+      setTimeout(() => {
+        this.inScan = false
+        this.$apply()
+      }, 500)
+      if (canEnterInto) {
+        wepy.navigateTo({ url: `/pages/enter?id=${gymCode}` })
+      } else {
+        wepy.navigateTo({ url: `/pages/leave?id=${gymCode}` })
+      }
+    } catch (e) {
+      const { confirm } = await wepy.showModal({
+        content: '请扫描场馆二维码',
+        confirmText: '重新扫描'
+      })
+      if (confirm) {
+        this.scanCode()
+      } else {
+        this.inScan = false
+        wepy.switchTab({ url: '/pages/tab-gyms' })
+      }
+    }
+  }
+
+  onShow() {
+    if (!this.inScan) {
+      wepy.hideTabBar()
+      this.scanCode()
+    }
+  }
+}
+</script>
+
+<style lang="scss">
+.container {
+  background-color: #111;
+}
+</style>

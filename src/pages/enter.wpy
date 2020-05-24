@@ -1,0 +1,140 @@
+<template>
+  <view class="container fixed-header" wx:if="{{gym && preEntrance}}">
+    <header title="准备入场" backhome="true" />
+    <view class="card">
+      <view class="title">{{gym.name}}</view>
+      <view class="note">当前时间为：{{preEntrance.currentDate}}</view>
+    </view>
+    <view class="lesson-list-wrapper">
+      <view class="title">您今天的课程情况是</view>
+      <view class="lesson-list">
+        <view class="lesson-item" wx:for="{{preEntrance.todayLessons}}" wx:key="id">
+          <view>{{item.itemInfo.itemName}}</view>
+          <view>{{item.itemInfo.chargeStartTime}}-{{item.itemInfo.chargeEndTime}}</view>
+          <view>{{item.itemInfo.itemDuration}}分钟</view>
+        </view>
+      </view>
+      <view class="lesson-list-empty" wx:if="{{preEntrance.todayLessons.length === 0}}">无</view>
+    </view>
+    <view class="tip" wx:if="{{preEntrance.todayLessons.length > 0 && preEntrance.needExtraCharge}}">
+      <view>温馨提示：</view>
+      <view>请勿过早进入场地，否则会产生其他费用。</view>
+    </view>
+    <view class="button" @tap="enter">入场</view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import API from '../api'
+import Header from '../components/header'
+
+export default class extends wepy.page {
+  config = {
+    navigationBarTextStyle: 'white'
+  }
+
+  components = {
+    header: Header
+  }
+
+  data = {
+    id: null,
+    gym: null,
+    preEntrance: null
+  }
+
+  methods = {
+    async enter() {
+      const { inTime } = await API.enter(this.id)
+      await wepy.showModal({
+        title: '入场成功',
+        content: `记时开始时间${inTime}`,
+        showCancel: false
+      })
+      wepy.switchTab({ url: '/pages/tab-gyms' })
+    }
+  }
+
+  async loadData() {
+    this.gym = await API.getGym(this.id)
+    this.preEntrance = await API.preEntranceCheck(this.id)
+    if (!this.preEntrance.canEnterInto) {
+      await wepy.showModal({
+        title: '提示',
+        content: '无法入场，您可能已在场地内，请重新扫码',
+        showCancel: false
+      })
+      wepy.switchTab({ url: '/pages/tab-gyms' })
+    }
+    this.$apply()
+  }
+
+  onLoad(opts) {
+    this.id = opts.id
+    this.loadData()
+  }
+}
+</script>
+
+<style lang="scss">
+.main {
+  background-color: #fff;
+}
+.card {
+  padding: 20px;
+  padding-bottom: 30px;
+  .title {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .note {
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-size: 16px;
+  }
+}
+.lesson-list-wrapper {
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  margin: 20px;
+  padding: 10px 0;
+  .title {
+    text-align: center;
+  }
+  .lesson-list {
+    .lesson-item {
+      padding: 8px 0;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      overflow: hidden;
+      font-size: 14px;
+    }
+  }
+}
+
+.tip {
+  margin: 20px;
+  font-size: 12px;
+  color: #9b9b9b;
+}
+
+.button {
+  position: fixed;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  border-radius: 6px;
+  width: 200px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  background-color: #38BA87;
+  color: #fff;
+}
+</style>
