@@ -5,6 +5,7 @@
       <view class="title">项目名称：{{gymItem.itemName}}</view>
       <view class="note">项目主要内容：{{gymItem.description}}</view>
       <view class="description">课程时长：{{gymItem.itemDuration}}分钟</view>
+      <view class="description">课程费用：{{gymItem.chargePrice}}元</view>
     </view>
     <view class="date-list-wrapper">
       <view class="title">选择您要预定的时间</view>
@@ -12,8 +13,8 @@
         <view class="date-item" wx:for="{{gymItem.usageDates}}" wx:key="id" @tap="book({{item}})">
           <view class="title">{{item.weekday}}</view>
           <view class="subtitle">{{item.day}}</view>
-          <view class="description" wx:if="{{item.reserveCount > 0}}">余{{item.reserveCount}}</view>
-          <view class="description" wx:if="{{item.reserveCount <= 0}}">0</view>
+          <view class="description" wx:if="{{item.remain > 0}}">余{{item.remain}}</view>
+          <view class="description" wx:if="{{item.remain <= 0}}">0</view>
         </view>
       </view>
     </view>
@@ -35,7 +36,17 @@
           <view class="form-info">{{gymItem.chargeStartTime}}-{{gymItem.chargeEndTime}}</view>
           <view class="form-item">
             <view class="label">预定人手机号</view>
-            <input class="input" value="{{mobile}}" @change="changeMobile" type="number" placeholder="请输入手机号" />
+            <input
+              class="input"
+              value="{{mobile}}"
+              focus="{{mobileFocus}}"
+              @input="changeMobile"
+              confirm-type="done"
+              @confirm="confirmBook"
+              adjust-position="{{false}}"
+              type="number"
+              placeholder="请输入手机号"
+            />
           </view>
         </view>
         <view class="actions">
@@ -68,7 +79,8 @@ export default class extends wepy.page {
     gymItem: null,
     dialogOpen: false,
     selectedDate: null,
-    mobile: null
+    mobile: null,
+    mobileFocus: false
   }
 
   methods = {
@@ -77,8 +89,19 @@ export default class extends wepy.page {
       this.dialogOpen = false
     },
     book(item) {
+      if (item.remain === 0) {
+        wepy.showModal({
+          content: '已预约满，请选择其他日期',
+          showCancel: false
+        })
+        return
+      }
       this.selectedDate = item
       this.dialogOpen = true
+      setTimeout(() => {
+        this.mobileFocus = true
+        this.$apply()
+      }, 100)
     },
     changeMobile(e) {
       this.mobile = e.detail.value
@@ -108,6 +131,7 @@ export default class extends wepy.page {
       x.date = date.format('YYYY-MM-DD')
       x.weekday = date.format('ddd')
       x.day = date.format('D')
+      x.remain = gymItem.reserveCount - x.reserveCount
     })
     this.gymItem = gymItem
     this.$apply()
