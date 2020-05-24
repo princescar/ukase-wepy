@@ -16,13 +16,10 @@ export default class extends wepy.app {
     pages: [
       'pages/index',
       'pages/tab-gyms',
-      'pages/tab-foods',
       'pages/tab-mine',
       'pages/tab-scan',
-      'pages/confirm-order',
       'pages/gym',
       'pages/gym-item',
-      'pages/food',
       'pages/favorite',
       'pages/enter',
       'pages/leave'
