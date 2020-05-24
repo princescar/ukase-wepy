@@ -25,6 +25,7 @@ export default class extends wepy.app {
       'pages/leave'
     ],
     tabBar: {
+      custom: true,
       color: '#7C7C7C',
       selectedColor: '#32A971',
       backgroundColor: '#FAFAFA',

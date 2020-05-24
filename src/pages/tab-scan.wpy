@@ -7,17 +7,10 @@ import wepy from 'wepy'
 import API from '../api'
 
 export default class extends wepy.page {
-  data = {
-    inScan: false
-  }
-
   async scanCode() {
     try {
-      this.inScan = true
-      const res = await wepy.scanCode({
-        onlyFromCamera: true,
-        scanType: 'qrCode'
-      })
+      const res = await wepy.scanCode({ scanType: 'qrCode' })
+
       const { result } = res
       console.log(result)
 
@@ -35,24 +28,12 @@ export default class extends wepy.page {
         wepy.navigateTo({ url: `/pages/leave?id=${gymCode}` })
       }
     } catch (e) {
-      const { confirm } = await wepy.showModal({
-        content: '请扫描场馆二维码',
-        confirmText: '重新扫描'
-      })
-      if (confirm) {
-        this.scanCode()
-      } else {
-        this.inScan = false
-        wepy.switchTab({ url: '/pages/tab-gyms' })
-      }
+      wepy.switchTab({ url: '/pages/tab-gyms' })
     }
   }
 
   onShow() {
-    if (!this.inScan) {
-      wepy.hideTabBar()
-      this.scanCode()
-    }
+    this.scanCode()
   }
 }
 </script>

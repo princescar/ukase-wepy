@@ -16,14 +16,12 @@
 
 <script>
 import wepy from 'wepy'
-import Tabs from 'wepy-com-tabs'
 import API from '../api'
 import Header from '../components/header'
 
 export default class extends wepy.page {
   components = {
-    header: Header,
-    tabs: Tabs
+    header: Header
   }
 
   data = {

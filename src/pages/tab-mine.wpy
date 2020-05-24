@@ -120,8 +120,10 @@ export default class extends wepy.page {
   }
 
   onShow() {
-    wepy.showTabBar()
     this.loadBookings()
+    if (typeof this.$wxpage.getTabBar === 'function' && this.$wxpage.getTabBar()) {
+      this.$wxpage.getTabBar().setData({ selected: 2 })
+    }
   }
 }
 </script>

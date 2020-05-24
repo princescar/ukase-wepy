@@ -22,8 +22,7 @@ export default class extends wepy.component {
     white: {
       type: String,
       default: 'false'
-    },
-    backhome: String
+    }
   }
 
   data = {
@@ -36,18 +35,13 @@ export default class extends wepy.component {
 
   methods = {
     back() {
-      if (this.backHome) {
-        wepy.switchTab({ url: '/pages/tab-gyms' })
-      } else {
-        wepy.navigateBack()
-      }
+      wepy.navigateBack()
     }
   }
 
   onLoad() {
     try {
       this.textWhite = JSON.parse(this.white)
-      this.backHome = JSON.parse(this.backhome)
     } catch (e) {}
 
     const pageStack = getCurrentPages()

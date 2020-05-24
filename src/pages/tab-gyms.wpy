@@ -157,9 +157,11 @@ export default class extends wepy.page {
   }
 
   onShow() {
-    wepy.showTabBar()
     this.loadBanners()
     this.loadData()
+    if (typeof this.$wxpage.getTabBar === 'function' && this.$wxpage.getTabBar()) {
+      this.$wxpage.getTabBar().setData({ selected: 0 })
+    }
   }
 }
 </script>

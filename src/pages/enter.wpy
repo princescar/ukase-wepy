@@ -1,6 +1,6 @@
 <template>
   <view class="container fixed-header" wx:if="{{gym && preEntrance}}">
-    <header title="准备入场" backhome="true" />
+    <header title="准备入场" />
     <view class="card">
       <view class="title">{{gym.name}}</view>
       <view class="note">当前时间为：{{preEntrance.currentDate}}</view>
@@ -78,10 +78,6 @@ export default class extends wepy.page {
   onLoad(opts) {
     this.id = opts.id
     this.loadData()
-    const pages = getCurrentPages()
-    pages[pages.length - 2].setData({
-      inScan: false
-    })
   }
 }
 </script>
