@@ -10,7 +10,7 @@ export default {
   getBanners() {
     return get('/banner/list')
   },
-  searchGyms({ location, distance, sortBy, filters, pagination } = {}) {
+  searchGyms({ location, distance, sortBy, filter, pagination } = {}) {
     const params = {}
     if (location) {
       params.longitude = location.longitude
@@ -21,6 +21,9 @@ export default {
     }
     if (sortBy) {
       params.sortType = sortBy.key
+    }
+    if (filter && filter.key) {
+      params.filter = filter.key
     }
     if (pagination) {
       params.pageIndex = pagination.pageIndex

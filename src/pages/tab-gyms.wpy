@@ -32,9 +32,16 @@
             {{sortings[sortingIndex].label}}
             <view class="icon triangle"/>
           </picker>
-          <view class="filter">筛选
-            <view class="icon funnel"/>
-          </view>
+          <picker
+            class="filter"
+            range="{{filters}}"
+            range-key="label"
+            value="{{filterIndex}}"
+            @change="onFilterChanged"
+          >
+            {{filters[filterIndex].label}}
+            <view class="icon triangle"/>
+          </picker>
         </view>
         <view class="list">
           <view class="item" wx:for="{{gyms}}" wx:key="id" @tap="detail({{item}})">
@@ -95,6 +102,12 @@ export default class extends wepy.page {
       { label: '高价优先', value: { key: 'hourlyPrice', direction: 'desc' } }
     ],
     sortingIndex: 0,
+    filters: [
+      { label: '全部', value: { key: null } },
+      { label: '健身房', value: { key: '健身房' } },
+      { label: '工作室', value: { key: '工作室' } }
+    ],
+    filterIndex: 0,
     hasUserLocation: false
   }
 
@@ -112,6 +125,10 @@ export default class extends wepy.page {
     },
     onSortingChanged(e) {
       this.sortingIndex = e.detail.value
+      this.loadData()
+    },
+    onFilterChanged(e) {
+      this.filterIndex = e.detail.value
       this.loadData()
     }
   }
@@ -132,7 +149,8 @@ export default class extends wepy.page {
     const { rows } = await API.searchGyms({
       location,
       distance: this.distances[this.distanceIndex].value,
-      sortBy: this.sortings[this.sortingIndex].value
+      sortBy: this.sortings[this.sortingIndex].value,
+      filter: this.filters[this.filterIndex].value
     })
     this.gyms = rows
     this.$apply()
