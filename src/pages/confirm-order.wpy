@@ -40,7 +40,7 @@
 <script>
 import wepy from 'wepy'
 import _ from 'lodash'
-import moment from 'moment'
+import dayjs from 'dayjs'
 import API from '../api'
 import ShoppingCart from '../services/shopping-cart'
 import Header from '../components/header'
@@ -66,7 +66,7 @@ export default class extends wepy.page {
       const dates = _.uniq(_.map(this.items, x => x.mealDate))
       return _.map(dates, x => {
         return {
-          label: moment(x).format('ddd'),
+          label: dayjs(x).format('ddd'),
           date: x
         }
       })
@@ -115,7 +115,7 @@ export default class extends wepy.page {
             quantity: 1
           }],
           x.supplierId,
-          moment(x.mealDate).toDate()
+          dayjs(x.mealDate).toDate()
         )
       }))
       wepy.showToast({ title: '预定成功！', icon: 'success', duration: 3000 })

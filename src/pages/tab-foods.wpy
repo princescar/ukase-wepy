@@ -98,7 +98,7 @@
 <script>
 import wepy from 'wepy'
 import _ from 'lodash'
-import moment from 'moment'
+import dayjs from 'dayjs'
 import API from '../api'
 import ShoppingCart from '../services/shopping-cart'
 import Header from '../components/header'
@@ -192,7 +192,7 @@ export default class extends wepy.page {
       const hasConflict = _.some(selectedDays, day => {
         const conflict = _.find(this.fixedDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
         if (conflict) {
-          wepy.showModal({ content: `${moment(conflict.mealDate).format('ddd')}已下单${conflict.name}为${this.dietLabels[conflict.labelAs]}，如需更改请先撤销订单`, title: '提示', showCancel: false })
+          wepy.showModal({ content: `${dayjs(conflict.mealDate).format('ddd')}已下单${conflict.name}为${this.dietLabels[conflict.labelAs]}，如需更改请先撤销订单`, title: '提示', showCancel: false })
           return true
         }
       })
@@ -215,7 +215,7 @@ export default class extends wepy.page {
       this.selectedDietDays = {}
       this.selectedDietLabel = null
       this.dialogOpen = false
-      this.selectedDay = _.minBy(selectedDays, x => moment(x).toDate())
+      this.selectedDay = _.minBy(selectedDays, x => dayjs(x).toDate())
       this.$apply()
     },
     async removeDiet(item) {
@@ -262,7 +262,7 @@ export default class extends wepy.page {
 
   async loadSchedule() {
     this.days = _.map(_.range(7), x => {
-      const date = moment().add(x, 'days')
+      const date = dayjs().add(x, 'days')
       return {
         day: date.format('YYYY-MM-DD'),
         label: date.format('ddd')

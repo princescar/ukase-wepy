@@ -50,7 +50,7 @@
 
 <script>
 import wepy from 'wepy'
-import moment from 'moment'
+import dayjs from 'dayjs'
 import API from '../api'
 import Header from '../components/header'
 
@@ -104,7 +104,7 @@ export default class extends wepy.page {
     this.mobile = wepy.getStorageSync('mobile')
     const gymItem = await API.getGymItem(this.id)
     gymItem.usageDates && gymItem.usageDates.forEach(x => {
-      const date = moment(x.usageDate)
+      const date = dayjs(x.usageDate)
       x.date = date.format('YYYY-MM-DD')
       x.weekday = date.format('ddd')
       x.day = date.format('D')
