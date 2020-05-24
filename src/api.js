@@ -1,8 +1,8 @@
 import wepy from 'wepy'
 import querystring from 'querystring'
 
-// const BASE_URL = 'https://api.hmc000.com'
-const BASE_URL = 'http://192.168.31.129:7652'
+const BASE_URL = 'https://api.hmc000.com'
+// const BASE_URL = 'http://192.168.31.129:7652'
 
 export default {
   login(code) {
