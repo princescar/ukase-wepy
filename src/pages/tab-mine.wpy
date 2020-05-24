@@ -24,7 +24,7 @@
       </view>
     </header>
 
-    <calendar :scheduleNumOfDay.sync="dates" @selectDay.user="onDateSelected" />
+    <calendar :scheduleNumOfDay.sync="dates" @selectDay.user="onDateSelected" @nextMonth="onNextWeek" />
 
     <view class="order-list">
       <view class="card" wx:for="{{dayActivities}}" wx:key="id">
@@ -35,7 +35,7 @@
               {{item.trackTypeString}}
               {{item.trackTypeDesc === 'gymItemOrder' ? item.extraInfoObj.itemName : ''}}
             </view>
-            <view class="status">{{date.format(item.gmtTime, 'HH:mm')}}</view>
+            <view class="status">{{item.timeString}}</view>
           </view>
         </view>
       </view>
@@ -70,8 +70,8 @@ export default class extends wepy.page {
   data = {
     activities: [],
     selectedDate: dayjs().format('YYYY-MM-DD'),
-    startDate: dayjs().format('YYYY-MM-DD'),
-    endDate: dayjs().add(7, 'days').format('YYYY-MM-DD'),
+    startDate: dayjs().add(-30, 'days').format('YYYY-MM-DD'),
+    endDate: dayjs().add(30, 'days').format('YYYY-MM-DD'),
     dialogOpen: false
   }
 
@@ -96,6 +96,9 @@ export default class extends wepy.page {
     onDateSelected(date) {
       this.selectedDate = date
     },
+    onNextWeek() {
+      console.log('NEXT_WEEK')
+    },
     openSetting() {
       wepy.setEnableDebug({ enableDebug: true })
     },
@@ -115,6 +118,7 @@ export default class extends wepy.page {
       if (x.extraInfo) {
         x.extraInfoObj = JSON.parse(x.extraInfo)
       }
+      x.timeString = dayjs(x.gmtTime).format('HH:mm')
     })
     this.$apply()
   }
@@ -210,6 +214,7 @@ export default class extends wepy.page {
   }
 }
 .order-list {
+  padding-bottom: 80px;
   .empty {
     padding: 5px;
     font-size: 12px;

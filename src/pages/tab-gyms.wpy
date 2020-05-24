@@ -168,6 +168,7 @@ export default class extends wepy.page {
 
 <style lang="scss">
 .container {
+  padding-bottom: 80px;
   background-color: #fff;
 }
 
