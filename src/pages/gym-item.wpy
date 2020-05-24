@@ -4,17 +4,17 @@
     <view class="card">
       <view class="title">项目名称：{{gymItem.itemName}}</view>
       <view class="note">项目主要内容：{{gymItem.description}}</view>
-      <view class="description">课程时长：{{gymItem.itemDuration}}分钟</view>
+      <view class="description">课程时长：{{gymItem.chargeStartTimeString}}-{{gymItem.chargeEndTimeString}} {{gymItem.itemDuration}}分钟</view>
       <view class="description">课程费用：{{gymItem.chargePrice}}元</view>
     </view>
     <view class="date-list-wrapper">
       <view class="title">选择您要预定的时间</view>
       <view class="date-list">
-        <view class="date-item" wx:for="{{gymItem.usageDates}}" wx:key="id" @tap="book({{item}})">
+        <view class="date-item" wx:for="{{dates}}" wx:key="id" @tap="book({{item}})">
           <view class="title">{{item.weekday}}</view>
           <view class="subtitle">{{item.day}}</view>
-          <view class="description" wx:if="{{item.remain > 0}}">余{{item.remain}}</view>
-          <view class="description" wx:if="{{item.remain <= 0}}">0</view>
+          <view class="description" wx:if="{{remainMap[item.date] > 0}}">余{{remainMap[item.date]}}</view>
+          <view class="description" wx:else>0</view>
         </view>
       </view>
     </view>
@@ -83,6 +83,30 @@ export default class extends wepy.page {
     mobileFocus: false
   }
 
+  computed = {
+    dates() {
+      const result = []
+      for (let i = 0; i < 7; i++) {
+        const date = dayjs().add(i, 'day')
+        result.push({
+          date: date.format('YYYY-MM-DD'),
+          weekday: date.format('ddd'),
+          day: date.format('D')
+        })
+      }
+      return result
+    },
+    remainMap() {
+      const result = {}
+      if (this.gymItem && this.gymItem.usageDates) {
+        this.gymItem.usageDates.forEach(item => {
+          result[item.usageDate] = this.gymItem.reserveCount - item.reserveCount
+        })
+      }
+      return result
+    }
+  }
+
   methods = {
     doNothing() {},
     closeDialog() {
@@ -111,29 +135,30 @@ export default class extends wepy.page {
         wepy.showToast({ title: '请填写预定人手机号', icon: 'none' })
         return
       }
-      const { gymCode, itemCode, itemChargeCode } = this.gymItem 
-      await API.newBooking(gymCode, itemCode, itemChargeCode, this.selectedDate.usageDate, this.mobile)
       wepy.setStorageSync('mobile', this.mobile)
-      wepy.showToast({ title: '预定成功！', icon: 'success', duration: 3000 })
-      setTimeout(() => {
-        this.dialogOpen = false
-        this.$apply()
-        wepy.navigateBack()
-      }, 3000)
+
+      const { gymCode, itemCode, itemChargeCode } = this.gymItem
+      const { orderNo } = await API.newBooking(gymCode, itemCode, itemChargeCode, this.selectedDate.date, this.mobile)
+      const { params } = await API.pay(orderNo)
+      const paramsObj = JSON.parse(params)
+      await wepy.requestPayment(paramsObj)
+
+      await wepy.showModal({
+        title: '预定成功',
+        content: `已成功预定${this.selectedDate.date} ${this.selectedDate.weekday} ${this.gymItem.itemName}`,
+        showCancel: false
+      })
+
+      wepy.switchTab({ url: '/pages/tab-mine' })
     }
   }
 
   async loadData() {
     this.mobile = wepy.getStorageSync('mobile')
-    const gymItem = await API.getGymItem(this.id)
-    gymItem.usageDates && gymItem.usageDates.forEach(x => {
-      const date = dayjs(x.usageDate)
-      x.date = date.format('YYYY-MM-DD')
-      x.weekday = date.format('ddd')
-      x.day = date.format('D')
-      x.remain = gymItem.reserveCount - x.reserveCount
-    })
-    this.gymItem = gymItem
+    this.gymItem = await API.getGymItem(this.id)
+    const dateString = dayjs().format('YYYY-MM-DD ')
+    this.gymItem.chargeStartTimeString = dayjs(dateString + this.gymItem.chargeStartTime).format('HH:mm')
+    this.gymItem.chargeEndTimeString = dayjs(dateString + this.gymItem.chargeEndTime).format('HH:mm')
     this.$apply()
   }
 

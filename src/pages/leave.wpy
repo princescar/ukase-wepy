@@ -3,8 +3,8 @@
     <header title="准备出场" backhome="true" white="true" />
     <view class="card">
       <view class="title">{{gym.name}}</view>
-      <view class="note">您的入场时间是：{{charge.inTime}}</view>
-      <view class="note">您的出场时间是：{{charge.outTime}}</view>
+      <view class="note">您的入场时间是：{{charge.inTimeString}}</view>
+      <view class="note">您的出场时间是：{{charge.outTimeString}}</view>
       <view class="note">停留时长为：{{charge.duration}}</view>
       <view class="note">费用总计：{{charge.amount}}</view>
     </view>
@@ -12,19 +12,20 @@
       <view class="title">计费详情</view>
       <view class="charge-list">
         <view class="charge-item" wx:for="{{charge.detail}}" wx:key="id">
-          <view>{{item.start}}-{{item.end}}</view>
+          <view>{{item.startString}}到{{item.endString}}</view>
           <view>{{item.price}}元/小时</view>
         </view>
       </view>
     </view>
     <view class="tip">如停留时间内有课程，则课程时间内以及课程开始前10分钟和结束后15分钟不计费</view>
-    <view class="button" @tap="leave">支付并出场</view>
+    <view class="button" @tap="pay">支付并出场</view>
   </view>
 </template>
 
 <script>
 import wepy from 'wepy'
 import dayjs from 'dayjs'
+import humanizeDuration from 'humanize-duration'
 import API from '../api'
 import Header from '../components/header'
 
@@ -48,7 +49,7 @@ export default class extends wepy.page {
       const { params } = await API.pay(this.charge.orderNo)
       const paramsObj = JSON.parse(params)
       try {
-        const payResult = await wepy.requestPayment(paramsObj)
+        await wepy.requestPayment(paramsObj)
         await wepy.showModal({
           content: '成功出场，欢迎您下次光临',
           showCancel: false
@@ -64,14 +65,31 @@ export default class extends wepy.page {
     this.gym = await API.getGym(this.id)
     this.charge = await API.leave(this.id)
     const { inTime, outTime } = this.charge
-    this.charge.duration = dayjs.duration(dayjs(outTime) - dayjs(inTime)).humanize()
+    this.charge.inTimeString = dayjs(inTime).format('YYYY-MM-DD HH:mm')
+    this.charge.outTimeString = dayjs(outTime).format('YYYY-MM-DD HH:mm')
+    this.charge.duration = humanizeDuration(dayjs(outTime) - dayjs(inTime), {
+      language: 'zh_CN',
+      units: ['h', 'm'],
+      maxDecimalPoints: 0,
+      spacer: '',
+      delimiter: ''
+    })
     this.charge.detail = JSON.parse(this.charge.chargeDetail)
+    this.charge.detail.forEach(item => {
+      const { start, end } = item
+      item.startString = dayjs(start).format('HH:mm')
+      item.endString = dayjs(end).format('HH:mm')
+    })
     this.$apply()
   }
 
   onLoad(opts) {
     this.id = opts.id
     this.loadData()
+    const pages = getCurrentPages()
+    pages[pages.length - 2].setData({
+      inScan: false
+    })
   }
 }
 </script>
@@ -93,7 +111,7 @@ export default class extends wepy.page {
     font-size: 16px;
   }
 }
-.lesson-list-wrapper {
+.charge-list-wrapper {
   border-top: 1px solid #eee;
   border-bottom: 1px solid #eee;
   margin: 20px;
@@ -101,8 +119,8 @@ export default class extends wepy.page {
   .title {
     text-align: center;
   }
-  .lesson-list {
-    .lesson-item {
+  .charge-list {
+    .charge-item {
       padding: 8px 0;
       display: flex;
       flex-direction: row;

@@ -1,7 +1,8 @@
 import wepy from 'wepy'
 import querystring from 'querystring'
 
-const BASE_URL = 'http://121.196.32.76:9001'
+// const BASE_URL = 'https://api.hmc000.com'
+const BASE_URL = 'http://192.168.31.129:7652'
 
 export default {
   login(code) {
@@ -23,7 +24,7 @@ export default {
       params.sortType = sortBy.key
     }
     if (filter && filter.key) {
-      params.filter = filter.key
+      params.category = filter.key
     }
     if (pagination) {
       params.pageIndex = pagination.pageIndex
@@ -50,13 +51,6 @@ export default {
       reserveName: '张三'
     })
   },
-  async getBookings() {
-    const query = new LeanCloud.Query('GymServiceBooking')
-    query.equalTo('user', LeanCloud.User.current())
-    query.include('gymService.gym')
-    const bookings = await query.find()
-    return bookings.map(parseId)
-  },
   setGymFavor(gymCode, favor) {
     if (favor) {
       return post('/userFav/add', { gymCode })
@@ -67,44 +61,23 @@ export default {
   getFavorGyms() {
     return get('/gyms/favor')
   },
-  async getOrderByTicket(ticket) {
-    const inQuery = new LeanCloud.Query('GymInstrumentOrder')
-    inQuery.equalTo('inTicket', ticket)
-
-    const outQuery = new LeanCloud.Query('GymInstrumentOrder')
-    outQuery.equalTo('outTicket', ticket)
-
-    const query = LeanCloud.Query.or(inQuery, outQuery)
-    const order = await query.first()
-
-    if (!order) {
-      return null
-    }
-
-    return parseId(order)
+  getMyTrack(gmtTimeStart, gmtTimeEnd) {
+    return get('/userTrack/myTrack', { gmtTimeStart, gmtTimeEnd })
   },
-  async getUnfinishedOrder() {
-    const query = new LeanCloud.Query('GymInstrumentOrder')
-    query.equalTo('status', 'new')
-    query.descending('createdAt')
-    const order = await query.first()
-    if (!order) {
-      return null
-    }
-    return parseId(order)
+  getMyOrders() {
+    return get('/userOrder/myOrders', { pageIndex: 1, pageSize: 99 })
   },
-  async getUnfinishedPayment(orderId) {
-    const order = LeanCloud.Object.createWithoutData('GymInstrumentOrder', orderId)
-    const query = new LeanCloud.Query('GymInstrumentOrderPayment')
-    query.equalTo('order', order)
-    query.equalTo('paid', false)
-    query.equalTo('type', 'wechat')
-    query.descending('createdAt')
-    const payment = await query.first()
-    if (!payment) {
-      return null
-    }
-    return parseId(payment)
+  preEntranceCheck(gymCode) {
+    return get('/userOrder/preEntranceCheck', { gymCode })
+  },
+  enter(gymCode) {
+    return post('/userOrder/intoGym', { gymCode })
+  },
+  leave(gymCode) {
+    return post('/userOrder/outOfGym', { gymCode })
+  },
+  pay(orderNo) {
+    return post('/userOrderPayFlow/createPayOrder', { orderNo, payMethod: 'wechat_mp' })
   }
 }
 
@@ -118,7 +91,7 @@ function post(url, data, query) {
 
 function request(method, url, query, body) {
   let fullUrl = BASE_URL + url
-  const token = wx.getStorageSync('token')
+  const token = wepy.getStorageSync('token')
 
   if (query) {
     query.userId = token

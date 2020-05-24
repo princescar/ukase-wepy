@@ -29,10 +29,6 @@ export default class extends wepy.page {
       }
 
       const { canEnterInto } = await API.preEntranceCheck(gymCode)
-      setTimeout(() => {
-        this.inScan = false
-        this.$apply()
-      }, 500)
       if (canEnterInto) {
         wepy.navigateTo({ url: `/pages/enter?id=${gymCode}` })
       } else {

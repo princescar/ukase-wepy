@@ -2,11 +2,10 @@
   <view class="container">
     <header>
       <view slot="left" class="setting" @longpress="openSetting"/>
-      <view slot="children" class="user-info" @tap="openQrCode">
+      <view slot="children" class="user-info">
         <open-data class="avatar" type="userAvatarUrl" />
         <view class="name">
           <open-data type="userNickName" />
-          <view class="icon qrcode" />
         </view>
       </view>
       <view slot="children" class="my-list">
@@ -25,55 +24,30 @@
       </view>
     </header>
 
-    <calendar :scheduleNumOfDay.sync="scheduledDates" @selectDay.user="onDateSelected" />
+    <calendar :scheduleNumOfDay.sync="dates" @selectDay.user="onDateSelected" />
 
     <view class="order-list">
-      <view class="card" wx:for="{{selectedDateBookings}}" wx:key="id">
+      <view class="card" wx:for="{{dayActivities}}" wx:key="id">
         <view class="summary">
-          <view class="title">{{item.gymService.name}}</view>
+          <view class="title">{{item.gymName}}</view>
           <view class="title">
-            <view class="store">{{item.gymService.gym.name}}</view>
-            <view class="status">{{date.format(item.time, 'HH:mm')}}</view>
+            <view class="store">
+              {{item.trackTypeString}}
+              {{item.trackTypeDesc === 'gymItemOrder' ? item.extraInfoObj.itemName : ''}}
+            </view>
+            <view class="status">{{date.format(item.gmtTime, 'HH:mm')}}</view>
           </view>
         </view>
       </view>
-      <view class="card" wx:for="{{selectedDateFoodOrders}}" wx:key="id">
-        <view class="summary">
-          <view class="title">{{item.details.foods[0].name}}</view>
-          <view class="title">
-            <view class="status">{{dietLabelNames[item.details.foods[0].labelAs]}}</view>
-          </view>
-        </view>
-      </view>
-      <view class="empty" wx:if="{{selectedDateBookings.length === 0 && selectedDateFoodOrders.length === 0}}">该日无预约</view>
-    </view>
-
-    <view class="{{'dialog-wrapper' + (dialogOpen ? ' show' : '')}}" @tap="closeDialog">
-      <view class="dialog" @tap.stop="doNothing">
-        <view class="close" @tap="closeDialog" />
-        <view class="head">
-          <view class="title">
-            {{ action === 'enter' ? '入场扫码' : '出场扫码' }}
-          </view>
-        </view>
-        <view class="body">
-          <canvas class="qrcode-canvas" canvas-id="qrcode" />
-        </view>
-        <view class="actions">
-          <view class="button primary" @tap="closeDialog">
-            关闭
-          </view>
-        </view>
-      </view>
+      <view class="empty" wx:if="{{dayActivities.length === 0}}">该日无预约</view>
     </view>
   </view>
 </template>
 
 <script>
 import wepy from 'wepy'
-import moment from 'moment'
+import dayjs from 'dayjs'
 import _ from 'lodash'
-import drawQrcode from 'weapp-qrcode'
 import API from '../api'
 import date from '../filters/date.wxs'
 import Header from '../components/header'
@@ -90,43 +64,26 @@ export default class extends wepy.page {
   }
 
   data = {
-    bookings: [],
-    foodOrders: [],
-    dietLabelNames: {
-      breakfast: '早餐',
-      lunch: '中餐',
-      supper: '晚餐'
-    },
-    selectedDate: moment().format('YYYY-MM-DD'),
-    dialogOpen: false,
-    action: 'enter',
-    ticket: '',
-    checkQrscanTimer: null
+    activities: [],
+    selectedDate: dayjs().format('YYYY-MM-DD'),
+    startDate: dayjs().format('YYYY-MM-DD'),
+    endDate: dayjs().add(7, 'days').format('YYYY-MM-DD'),
+    dialogOpen: false
   }
 
   computed = {
-    scheduledDates() {
-      const bookings = _.groupBy(this.bookings, x => moment(x.time).format('YYYY-MM-DD'))
-      const foodOrders = _.groupBy(this.foodOrders, x => moment(x.details.arriveDate).format('YYYY-MM-DD'))
+    dates() {
+      const activities = _.groupBy(this.activities, x => dayjs(x.gmtTime).format('YYYY-MM-DD'))
 
-      const all = _.mergeWith(bookings, foodOrders, (x, y) => {
-        if (_.isArray(x)) {
-          return x.concat(y)
-        }
-      })
-
-      return _.map(all, (items, day) => {
+      return _.map(activities, (items, day) => {
         return {
           day,
           num: items.length
         }
       })
     },
-    selectedDateBookings() {
-      return _.filter(this.bookings, x => moment(x.time).isSame(this.selectedDate, 'day'))
-    },
-    selectedDateFoodOrders() {
-      return _.filter(this.foodOrders, x => moment(x.details.arriveDate).isSame(this.selectedDate, 'day'))
+    dayActivities() {
+      return _.filter(this.activities, x => dayjs(x.gmtTime).isSame(this.selectedDate && this.selectedDate.fullDate, 'day'))
     }
   }
 
@@ -138,71 +95,29 @@ export default class extends wepy.page {
     openSetting() {
       wepy.setEnableDebug({ enableDebug: true })
     },
-    async openQrCode() {
-      this.action = 'enter'
-      const order = await API.getUnfinishedOrder()
-      if (order) {
-        this.action = 'leave'
-      }
-      this.dialogOpen = true
-      const { code } = await wepy.login()
-      this.ticket = code
-      drawQrcode({
-        width: 200,
-        height: 200,
-        canvasId: 'qrcode',
-        text: `${this.action}|${this.ticket}`
-      })
-      this.$apply()
-      this.checkQrscan()
-    },
-    closeDialog() {
-      clearTimeout(this.checkQrscanTimer)
-      this.dialogOpen = false
-    },
     favor() {
       wepy.navigateTo({ url: 'favorite' })
     }
   }
 
-  async checkQrscan() {
-    const order = await API.getOrderByTicket(this.ticket)
-    if (!order) {
-      this.checkQrscanTimer = setTimeout(() => this.checkQrscan(), 1000)
-      return
-    }
-
-    const { inTime, outTime } = order
-    if (outTime) {
-      wepy.showToast({ title: '出场成功' })
-      const payment = await API.getUnfinishedPayment(order.objectId)
-      console.log(payment)
-      wepy.requestPayment(payment.params)
-    } else if (inTime) {
-      wepy.showToast({ title: '入场成功' })
-    }
-
-    this.dialogOpen = false
-    this.$apply()
-  }
-
   async loadBookings() {
-    this.bookings = await API.getBookings()
+    this.activities = await API.getMyTrack(this.startDate, this.endDate)
+    this.activities.forEach(x => {
+      x.trackTypeString = {
+        gymIn: '入场',
+        gymOut: '出场',
+        gymItemOrder: '预约课程'
+      }[x.trackTypeDesc] || x.trackTypeDesc
+      if (x.extraInfo) {
+        x.extraInfoObj = JSON.parse(x.extraInfo)
+      }
+    })
     this.$apply()
   }
 
   onShow() {
+    wepy.showTabBar()
     this.loadBookings()
-    drawQrcode({
-      width: 200,
-      height: 200,
-      canvasId: 'qrcode',
-      text: 'qrcode'
-    })
-  }
-
-  onHide() {
-    this.methods.closeDialog()
   }
 }
 </script>
@@ -341,20 +256,5 @@ export default class extends wepy.page {
       }
     }
   }
-}
-
-.dialog {
-  .body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-}
-.qrcode-canvas {
-  background-color: #eee;
-  height: 200px;
-  width: 200px;
-  margin: 20px;
-  margin-bottom: 40px;
 }
 </style>

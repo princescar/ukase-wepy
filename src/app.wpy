@@ -2,7 +2,6 @@
 import wepy from 'wepy'
 import 'wepy-async-function'
 import dayjs from 'dayjs'
-import duration from 'dayjs/plugin/duration'
 import 'dayjs/locale/zh-cn'
 import Device from './services/device'
 
@@ -69,7 +68,6 @@ export default class extends wepy.app {
     super()
     this.use('requestfix')
     this.use('promisify')
-    dayjs.extend(duration)
     dayjs.locale('zh-cn')
   }
 

@@ -10,7 +10,7 @@
       <view class="lesson-list">
         <view class="lesson-item" wx:for="{{preEntrance.todayLessons}}" wx:key="id">
           <view>{{item.itemInfo.itemName}}</view>
-          <view>{{item.itemInfo.chargeStartTime}}-{{item.itemInfo.chargeEndTime}}</view>
+          <view>{{item.inTimeString}}-{{item.outTimeString}}</view>
           <view>{{item.itemInfo.itemDuration}}分钟</view>
         </view>
       </view>
@@ -26,6 +26,7 @@
 
 <script>
 import wepy from 'wepy'
+import dayjs from 'dayjs'
 import API from '../api'
 import Header from '../components/header'
 
@@ -67,12 +68,20 @@ export default class extends wepy.page {
       })
       wepy.switchTab({ url: '/pages/tab-gyms' })
     }
+    this.preEntrance.todayLessons.forEach(x => {
+      x.inTimeString = dayjs(x.inTime).format('HH:mm')
+      x.outTimeString = dayjs(x.outTime).format('HH:mm')
+    })
     this.$apply()
   }
 
   onLoad(opts) {
     this.id = opts.id
     this.loadData()
+    const pages = getCurrentPages()
+    pages[pages.length - 2].setData({
+      inScan: false
+    })
   }
 }
 </script>

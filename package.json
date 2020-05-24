@@ -12,6 +12,7 @@
   "license": "MIT",
   "dependencies": {
     "dayjs": "^1.8.27",
+    "humanize-duration": "^3.23.0",
     "querystring": "^0.2.0",
     "weapp-qrcode": "^1.0.0",
     "wepy": "^1.6.0",

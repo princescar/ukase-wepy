@@ -27,7 +27,7 @@
       <view class="note" wx:if="{{gym.normalItems && gym.normalItems.length > 0}}">
         自由锻练：
         <view wx:for="{{gym.normalItems}}" wx:key="itemChargeCode">
-          {{item.chargeStartTime}}-{{item.chargeEndTime}} {{item.chargePrice * 60}}元/小时
+          {{item.chargeStartTimeString}}-{{item.chargeEndTimeString}} {{item.chargePrice}}元/小时
         </view>
       </view>
       <view class="description">{{gym.description}}</view>
@@ -40,7 +40,7 @@
         <view class="wrapper">
           <view class="title">{{item.itemName}}</view>
           <view class="description">{{item.description}}</view>
-          <view class="description">{{item.chargePrice}}元/{{item.itemDuration}}分钟</view>
+          <view class="description">{{item.chargeStartTimeString}}-{{item.chargeEndTimeString}} {{item.chargePrice}}元/{{item.itemDuration}}分钟</view>
         </view>
         <view class="book" @tap="book({{item}})">
           预定
@@ -52,6 +52,7 @@
 
 <script>
 import wepy from 'wepy'
+import dayjs from 'dayjs'
 import API from '../api'
 import Header from '../components/header'
 
@@ -96,7 +97,16 @@ export default class extends wepy.page {
   }
 
   async loadData() {
+    const dateString = dayjs().format('YYYY-MM-DD ')
     this.gym = await API.getGym(this.id)
+    this.gym.normalItems.forEach(x => {
+      x.chargeStartTimeString = dayjs(dateString + x.chargeStartTime).format('HH:mm')
+      x.chargeEndTimeString = dayjs(dateString + x.chargeEndTime).format('HH:mm')
+    })
+    this.gym.lessonItems.forEach(x => {
+      x.chargeStartTimeString = dayjs(dateString + x.chargeStartTime).format('HH:mm')
+      x.chargeEndTimeString = dayjs(dateString + x.chargeEndTime).format('HH:mm')
+    })
     this.$apply()
   }
 
