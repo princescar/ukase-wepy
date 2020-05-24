@@ -97,7 +97,24 @@
 
 <script>
 import wepy from 'wepy'
-import _ from 'lodash'
+import {
+  each,
+  filter,
+  concat,
+  first,
+  keys,
+  some,
+  find,
+  remove,
+  minBy,
+  uniq,
+  map,
+  pickBy,
+  flatten,
+  includes,
+  range,
+  last
+} from 'lodash'
 import dayjs from 'dayjs'
 import API from '../api'
 import ShoppingCart from '../services/shopping-cart'
@@ -138,10 +155,10 @@ export default class extends wepy.page {
     },
     dietByDay() {
       const map = {}
-      _.each(_.map(this.days, x => x.day), day => {
-        const fixed = _.filter(this.fixedDiet, x => x.mealDate === day)
-        const pending = _.filter(this.pendingDiet, x => x.mealDate === day)
-        map[day] = _.concat(fixed, pending)
+      each(map(this.days, x => x.day), day => {
+        const fixed = filter(this.fixedDiet, x => x.mealDate === day)
+        const pending = filter(this.pendingDiet, x => x.mealDate === day)
+        map[day] = concat(fixed, pending)
       })
       return map
     }
@@ -166,7 +183,7 @@ export default class extends wepy.page {
       this.selectedFood = food
       this.selectedDietDays = { [this.selectedDay]: true }
       if (this.selectedFood.labels.length === 1) {
-        this.selectedDietLabel = _.first(this.selectedFood.labels)
+        this.selectedDietLabel = first(this.selectedFood.labels)
       }
       this.dialogOpen = true
       this.$apply()
@@ -178,7 +195,7 @@ export default class extends wepy.page {
       this.selectedDietLabel = label
     },
     addToDiet() {
-      const selectedDays = _.keys(_.pickBy(this.selectedDietDays, x => x))
+      const selectedDays = keys(pickBy(this.selectedDietDays, x => x))
       if (selectedDays.length === 0) {
         wepy.showToast({ title: '请选择计划用餐时间', icon: 'none' })
         return
@@ -189,8 +206,8 @@ export default class extends wepy.page {
       }
 
       // 检查是否与已固定的计划有冲突
-      const hasConflict = _.some(selectedDays, day => {
-        const conflict = _.find(this.fixedDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
+      const hasConflict = some(selectedDays, day => {
+        const conflict = find(this.fixedDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
         if (conflict) {
           wepy.showModal({ content: `${dayjs(conflict.mealDate).format('ddd')}已下单${conflict.name}为${this.dietLabels[conflict.labelAs]}，如需更改请先撤销订单`, title: '提示', showCancel: false })
           return true
@@ -200,8 +217,8 @@ export default class extends wepy.page {
         return
       }
 
-      _.each(selectedDays, day => {
-        _.remove(this.pendingDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
+      each(selectedDays, day => {
+        remove(this.pendingDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
         this.pendingDiet.push({
           mealDate: day,
           labelAs: this.selectedDietLabel,
@@ -215,7 +232,7 @@ export default class extends wepy.page {
       this.selectedDietDays = {}
       this.selectedDietLabel = null
       this.dialogOpen = false
-      this.selectedDay = _.minBy(selectedDays, x => dayjs(x).toDate())
+      this.selectedDay = minBy(selectedDays, x => dayjs(x).toDate())
       this.$apply()
     },
     async removeDiet(item) {
@@ -228,7 +245,7 @@ export default class extends wepy.page {
         content: `确定不吃${item.name}了吗？`
       })
       if (confirm) {
-        _.remove(this.pendingDiet, x => x.mealDate === item.mealDate && x.labelAs === item.labelAs && x.id === item.id)
+        remove(this.pendingDiet, x => x.mealDate === item.mealDate && x.labelAs === item.labelAs && x.id === item.id)
         ShoppingCart.set(this.pendingDiet)
         this.$apply()
       }
@@ -250,26 +267,26 @@ export default class extends wepy.page {
 
   async loadFoods() {
     this.foods = await API.searchFoods()
-    const categories = _.uniq(_.flatten(_.map(this.foods, x => x.tags)))
-    this.categories = _.map(categories, x => {
+    const categories = uniq(flatten(map(this.foods, x => x.tags)))
+    this.categories = map(categories, x => {
       return { name: x }
     })
-    _.each(this.categories, x => {
-      x.foods = _.filter(this.foods, y => _.includes(y.tags, x.name))
+    each(this.categories, x => {
+      x.foods = filter(this.foods, y => includes(y.tags, x.name))
     })
     this.$apply()
   }
 
   async loadSchedule() {
-    this.days = _.map(_.range(7), x => {
+    this.days = map(range(7), x => {
       const date = dayjs().add(x, 'days')
       return {
         day: date.format('YYYY-MM-DD'),
         label: date.format('ddd')
       }
     })
-    this.selectedDay = _.first(this.days).day
-    this.fixedDiet = await API.getDiet(_.first(this.days).day, _.last(this.days).day)
+    this.selectedDay = first(this.days).day
+    this.fixedDiet = await API.getDiet(first(this.days).day, last(this.days).day)
     this.pendingDiet = ShoppingCart.get() || []
     this.$apply()
   }

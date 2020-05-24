@@ -39,7 +39,15 @@
 
 <script>
 import wepy from 'wepy'
-import _ from 'lodash'
+import {
+  uniq,
+  map,
+  groupBy,
+  sumBy,
+  remove,
+  flatten,
+  values
+} from 'lodash'
 import dayjs from 'dayjs'
 import API from '../api'
 import ShoppingCart from '../services/shopping-cart'
@@ -63,8 +71,8 @@ export default class extends wepy.page {
 
   computed = {
     dates() {
-      const dates = _.uniq(_.map(this.items, x => x.mealDate))
-      return _.map(dates, x => {
+      const dates = uniq(map(this.items, x => x.mealDate))
+      return map(dates, x => {
         return {
           label: dayjs(x).format('ddd'),
           date: x
@@ -72,10 +80,10 @@ export default class extends wepy.page {
       })
     },
     itemsByDay() {
-      return _.groupBy(this.items, x => x.mealDate)
+      return groupBy(this.items, x => x.mealDate)
     },
     total() {
-      return _.sumBy(this.items, x => x.price)
+      return sumBy(this.items, x => x.price)
     }
   }
 
@@ -95,11 +103,11 @@ export default class extends wepy.page {
         content: `确定不吃${item.name}了吗？`
       })
       if (confirm) {
-        _.remove(this.items, x => x.mealDate === item.mealDate && x.labelAs === item.labelAs && x.id === item.id)
+        remove(this.items, x => x.mealDate === item.mealDate && x.labelAs === item.labelAs && x.id === item.id)
         ShoppingCart.set(this.items)
         this.$apply()
       }
-      if (_.flatten(_.values(this.items)).length === 0) {
+      if (flatten(values(this.items)).length === 0) {
         wepy.navigateBack()
       }
     },
@@ -108,7 +116,7 @@ export default class extends wepy.page {
         wepy.showToast({ title: '请选择配送地址', icon: 'none' })
         return
       }
-      await Promise.all(_.map(this.items, x => {
+      await Promise.all(map(this.items, x => {
         return API.newDiet(
           [{
             ...x,

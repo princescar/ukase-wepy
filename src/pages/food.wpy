@@ -69,7 +69,19 @@
 
 <script>
 import wepy from 'wepy'
-import _ from 'lodash'
+import {
+  first,
+  keys,
+  some,
+  find,
+  each,
+  remove,
+  minBy,
+  map,
+  pickBy,
+  range,
+  last
+} from 'lodash'
 import dayjs from 'dayjs'
 import API from '../api'
 import ShoppingCart from '../services/shopping-cart'
@@ -116,7 +128,7 @@ export default class extends wepy.page {
     addFood() {
       this.selectedDietDays = {}
       if (this.food.labels.length === 1) {
-        this.selectedDietLabel = _.first(this.food.labels)
+        this.selectedDietLabel = first(this.food.labels)
       }
       this.dialogOpen = true
       this.$apply()
@@ -128,7 +140,7 @@ export default class extends wepy.page {
       this.selectedDietLabel = label
     },
     addToDiet() {
-      const selectedDays = _.keys(_.pickBy(this.selectedDietDays, x => x))
+      const selectedDays = keys(pickBy(this.selectedDietDays, x => x))
       if (selectedDays.length === 0) {
         wepy.showToast({ title: '请选择计划用餐时间', icon: 'none' })
         return
@@ -139,8 +151,8 @@ export default class extends wepy.page {
       }
 
       // 检查是否与已固定的计划有冲突
-      const hasConflict = _.some(selectedDays, day => {
-        const conflict = _.find(this.fixedDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
+      const hasConflict = some(selectedDays, day => {
+        const conflict = find(this.fixedDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
         if (conflict) {
           wepy.showModal({ content: `${dayjs(conflict.mealDate).format('ddd')}已下单${conflict.name}为${this.dietLabels[conflict.labelAs]}，如需更改请先撤销订单`, title: '提示', showCancel: false })
           return true
@@ -150,8 +162,8 @@ export default class extends wepy.page {
         return
       }
 
-      _.each(selectedDays, day => {
-        _.remove(this.pendingDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
+      each(selectedDays, day => {
+        remove(this.pendingDiet, x => x.mealDate === day && x.labelAs === this.selectedDietLabel)
         this.pendingDiet.push({
           mealDate: day,
           labelAs: this.selectedDietLabel,
@@ -165,7 +177,7 @@ export default class extends wepy.page {
       this.selectedDietDays = {}
       this.selectedDietLabel = null
       this.dialogOpen = false
-      this.selectedDay = _.minBy(selectedDays, x => dayjs(x).toDate())
+      this.selectedDay = minBy(selectedDays, x => dayjs(x).toDate())
       this.$apply()
     },
     closeDialog() {
@@ -176,14 +188,14 @@ export default class extends wepy.page {
   }
 
   async loadSchedule() {
-    this.days = _.map(_.range(7), x => {
+    this.days = map(range(7), x => {
       const date = dayjs().add(x, 'days')
       return {
         day: date.format('YYYY-MM-DD'),
         label: date.format('ddd')
       }
     })
-    this.fixedDiet = await API.getDiet(_.first(this.days).day, _.last(this.days).day)
+    this.fixedDiet = await API.getDiet(first(this.days).day, last(this.days).day)
     this.pendingDiet = ShoppingCart.get() || []
     this.$apply()
   }

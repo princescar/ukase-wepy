@@ -47,7 +47,11 @@
 <script>
 import wepy from 'wepy'
 import dayjs from 'dayjs'
-import _ from 'lodash'
+import {
+  groupBy,
+  map,
+  filter
+} from 'lodash'
 import API from '../api'
 import date from '../filters/date.wxs'
 import Header from '../components/header'
@@ -73,9 +77,9 @@ export default class extends wepy.page {
 
   computed = {
     dates() {
-      const activities = _.groupBy(this.activities, x => dayjs(x.gmtTime).format('YYYY-MM-DD'))
+      const activities = groupBy(this.activities, x => dayjs(x.gmtTime).format('YYYY-MM-DD'))
 
-      return _.map(activities, (items, day) => {
+      return map(activities, (items, day) => {
         return {
           day,
           num: items.length
@@ -83,7 +87,7 @@ export default class extends wepy.page {
       })
     },
     dayActivities() {
-      return _.filter(this.activities, x => dayjs(x.gmtTime).isSame(this.selectedDate && this.selectedDate.fullDate, 'day'))
+      return filter(this.activities, x => dayjs(x.gmtTime).isSame(this.selectedDate && this.selectedDate.fullDate, 'day'))
     }
   }
 
