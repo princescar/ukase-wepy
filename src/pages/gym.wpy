@@ -27,7 +27,7 @@
       <view class="note" wx:if="{{gym.normalItems && gym.normalItems.length > 0}}">
         自由锻练：
         <view wx:for="{{gym.normalItems}}" wx:key="itemChargeCode">
-          {{item.chargeStartTime}}-{{item.chargeEndTime}} {{item.chargePrice}}元/小时
+          {{item.chargeStartTime}}-{{item.chargeEndTime}} {{item.chargePrice * 60}}元/小时
         </view>
       </view>
       <view class="description">{{gym.description}}</view>
