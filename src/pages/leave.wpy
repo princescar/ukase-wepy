@@ -18,7 +18,9 @@
       </view>
     </view>
     <view class="tip">如停留时间内有课程，则课程时间内以及课程开始前10分钟和结束后15分钟不计费</view>
-    <view class="button" @tap="pay">支付并出场</view>
+    <view class="button" @tap="pay">
+      {{charge.amount > 0 ? '支付并出场' : '无需支付，直接出场'}}
+    </view>
   </view>
 </template>
 
@@ -46,17 +48,25 @@ export default class extends wepy.page {
 
   methods = {
     async pay() {
-      const { params } = await API.pay(this.charge.orderNo)
-      const paramsObj = JSON.parse(params)
       try {
-        await wepy.requestPayment(paramsObj)
+        if (this.charge && this.charge.amount > 0) {
+          const { params } = await API.pay(this.charge.orderNo)
+          const paramsObj = JSON.parse(params)
+          await wepy.requestPayment(paramsObj)
+        } else {
+          await API.zeroPay(this.charge.orderNo)
+        }
         await wepy.showModal({
           content: '成功出场，欢迎您下次光临',
           showCancel: false
         })
         wepy.switchTab({ url: '/pages/tab-gyms' })
       } catch (e) {
-        console.log(e)
+        await wepy.showModal({
+          content: '成功失败，请重试',
+          showCancel: false
+        })
+        await this.loadData()
       }
     }
   }

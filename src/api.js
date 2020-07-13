@@ -77,6 +77,9 @@ export default {
   },
   pay(orderNo) {
     return post('/userOrderPayFlow/createPayOrder', { orderNo, payMethod: 'wechat_mp' })
+  },
+  zeroPay(orderNo) {
+    return post('/userOrderPayFlow/createZeroPayOrder', { orderNo })
   }
 }
 
