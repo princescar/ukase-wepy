@@ -9,8 +9,8 @@ import API from '../api'
 export default class extends wepy.page {
   async onLoad(opts) {
     const { code } = await wepy.login()
-    const { userId } = await API.login(code)
-    wepy.setStorageSync('token', userId)
+    const token = await API.login(code)
+    wepy.setStorageSync('token', token)
 
     const next = opts.r || '/pages/tab-gyms'
     wepy.reLaunch({ url: next })

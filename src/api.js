@@ -1,12 +1,11 @@
 import wepy from 'wepy'
 import querystring from 'querystring'
 
-const BASE_URL = 'https://api.hmc000.com'
-// const BASE_URL = 'http://192.168.31.129:7652'
+const BASE_URL = 'https://api.hmc000.com/gate'
 
 export default {
   login(code) {
-    return get('/user/code', { code })
+    return get('/user/wechatLogin', { code })
   },
   getBanners() {
     return get('/banner/list')
@@ -94,12 +93,8 @@ function request(method, url, query, body) {
   const token = wepy.getStorageSync('token')
 
   if (query) {
-    query.userId = token
     const qs = querystring.stringify(query)
     fullUrl += `?${qs}`
-  }
-  if (body) {
-    body.userId = token
   }
 
   console.debug(method)
@@ -109,6 +104,7 @@ function request(method, url, query, body) {
 
   return wepy
     .request({
+      header: { token },
       method: method,
       url: fullUrl,
       data: body
