@@ -1,6 +1,7 @@
 <template>
-  <view class="header" style="padding-top: {{paddingTop}}px;">
-    <view class="{{'navigation' + (showBack ? ' show-back' : '')}}" style="height: {{navigationHeight}}px;">
+  <view class="header">
+    <view class="{{'navigation' + (showBack ? ' show-back' : '')}}" style="margin-top:{{navigationTop}}px;height:{{navigationHeight}}px;">
+      <view wx:if="{{showBack}}" @tap="back" class="back"/>
       <view class="{{'title ' + (textWhite ? ' white' : '')}}">
         <slot name="left"/>
         {{title}}
@@ -8,7 +9,6 @@
       </view>
     </view>
     <slot name="children"/>
-    <view wx:if="{{showBack}}" @tap="back" class="back" style="top: {{paddingTop}}px;"/>
   </view>
 </template>
 
@@ -29,8 +29,9 @@ export default class extends wepy.component {
     textWhite: false,
     backHome: false,
     showBack: false,
-    paddingTop: 20,
-    navigationHeight: 44
+    statusTop: 20,
+    navigationHeight: 32,
+    navigationTop: 48
   }
 
   methods = {
@@ -47,8 +48,9 @@ export default class extends wepy.component {
     const pageStack = getCurrentPages()
     this.showBack = pageStack.length > 1
 
-    this.paddingTop = Device.systemInfo.statusBarHeight
-    this.navigationHeight = Device.menuButtonRect.height + (Device.menuButtonRect.top - Device.systemInfo.statusBarHeight) * 2
+    this.statusTop = Device.systemInfo.statusBarHeight
+    this.navigationHeight = Device.menuButtonRect.height
+    this.navigationTop = Device.menuButtonRect.top
 
     this.$apply()
   }
@@ -56,40 +58,44 @@ export default class extends wepy.component {
 </script>
 
 <style lang="scss">
-.header {
-  &>.children {
-    position: relative;
-  }
-}
-
-.back {
-  position: fixed;
-  left: 0;
-  top: 20px;
-  height: 32px;
-  width: 32px;
-  margin: 4px;
-  margin-left: 10px;
-  border-radius: 999px;
-  background: rgba(200,200,200,0.6) url() center / 16px 16px no-repeat;
-  background-image: url('data:image/svg+xml;utf8,<svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="81" height="81"><path d="M783.128 97.117L363.044 511.986l420.068 414.869a56.398 56.398 0 010 80.461 58.11 58.11 0 01-81.47 0L240.856 552.21a56.398 56.398 0 010-80.446L701.643 16.656a58.11 58.11 0 0181.47 0 56.398 56.398 0 010 80.461z" fill="#fff"/></svg>');
-  background-position-x: 7px;
-}
-
 .navigation {
+  position: fixed;
+  top: 0;
   padding: 0 10px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  &.show-back {
-    padding-left: 46px;
-  }
+  z-index: 10;
   &>.title {
     font-size: 18px;
     font-weight: 600;
     &.white {
       color: #fff;
     }
+  }
+}
+
+.back {
+  position: relative;
+  border: 1rpx solid rgba(255,255,255,.2);
+  height: 32px;
+  width: 32px;
+  border-radius: 999px;
+  background-color: rgba(0,0,0,.2);
+  &:before, &:after {
+    position: absolute;
+    content: '';
+    left: 8px;
+    top: 10px;
+    border: 1px solid #fff;
+    border-radius: 999px;
+    width: 12px;
+    transform: rotate(-45deg);
+    background-color: #fff;
+  }
+  &:after {
+    top: 19px;
+    transform: rotate(45deg);
   }
 }
 </style>

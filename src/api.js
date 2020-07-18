@@ -126,10 +126,10 @@ function request(method, url, query, body) {
     })
 }
 
-function showError(error) {
+function showError(msg) {
   wepy.showModal({
     title: '错误',
-    content: error,
+    content: msg || '发生了未知错误',
     showCancel: false
   })
 }

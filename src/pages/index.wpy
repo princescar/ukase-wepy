@@ -1,5 +1,7 @@
 <template>
-  <view class="initializing" />
+  <view class="container">
+    <view class="spinner"/>
+  </view>
 </template>
 
 <script>
@@ -7,6 +9,11 @@ import wepy from 'wepy'
 import API from '../api'
 
 export default class extends wepy.page {
+  config = {
+    navigationStyle: 'custom',
+    disableScroll: true
+  }
+
   async onLoad(opts) {
     const { code } = await wepy.login()
     const token = await API.login(code)
@@ -19,10 +26,12 @@ export default class extends wepy.page {
 </script>
 
 <style lang="scss">
-.initializing {
+.container {
   height: 100vh;
   width: 100vw;
-  background: #fff url() center / 100% no-repeat;
-  background-image: url('https://mmbiz.qpic.cn/mmbiz_gif/Q51MeZaxUwkV0tkXic7R4asFSPAViajRVvxPHF8BzlNxb4laa9DXUeX6TjMib6iaFwD7qErCUouLo8bGKBakOdK5TQ/640?wx_fmt=gif&wxfrom=5&wx_lazy=1');
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(0deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
 }
 </style>

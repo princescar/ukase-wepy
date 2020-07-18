@@ -1,65 +1,57 @@
 <template>
-  <view class="container fixed-header">
-    <header title="健身中心" />
-    <view class="main y-scroll">
-      <view class="wrapper">
-        <view class="banner">
-          <swiper indicator-dots="{{true}}" indicator-active-color="#fff" autoplay="{{true}}" circular="{{true}}">
-            <swiper-item wx:for="{{banners}}" wx:key="id">
-              <view class="image" style="background-image: url('{{item.bannerUrl}}');"/>
-            </swiper-item>
-          </swiper>
-          <!-- <search-bar>健身房</search-bar> -->
-        </view>
-        <view class="filter-area">
-          <picker
-            class="filter"
-            range="{{distances}}"
-            range-key="label"
-            value="{{distanceIndex}}"
-            @change="onRangeChanged"
-          >
-            {{distances[distanceIndex].label}}
-            <view class="icon triangle"/>
-          </picker>
-          <picker
-            class="filter"
-            range="{{sortings}}"
-            range-key="label"
-            value="{{sortingIndex}}"
-            @change="onSortingChanged"
-          >
-            {{sortings[sortingIndex].label}}
-            <view class="icon triangle"/>
-          </picker>
-          <picker
-            class="filter"
-            range="{{filters}}"
-            range-key="label"
-            value="{{filterIndex}}"
-            @change="onFilterChanged"
-          >
-            {{filters[filterIndex].label}}
-            <view class="icon triangle"/>
-          </picker>
-        </view>
-        <view class="list">
-          <view class="item" wx:for="{{gyms}}" wx:key="id" @tap="detail({{item}})">
-            <image src="{{item.thumbnail}}" mode="aspectFill" />
-            <view class="summary">
-              <view>
-                <view class="title">{{item.name}}</view>
-                <view class="rating star-{{item.rating}}"/>
-              </view>
-              <view class="note">
-                <view>
-                  {{item.district}}
-                  {{item.category}}
-                </view>
-                <view wx:if="{{hasUserLocation}}">{{distance.format(item.distance)}}</view>
-              </view>
+  <view class="container">
+    <view class="banner">
+      <swiper indicator-dots="{{true}}" indicator-active-color="#fff" autoplay="{{true}}" circular="{{true}}">
+        <swiper-item wx:for="{{banners}}" wx:key="id">
+          <view class="image" style="background-image: url('{{item.bannerUrl}}');"/>
+        </swiper-item>
+      </swiper>
+    </view>
+    <view class="filter-area">
+      <picker
+        class="filter"
+        range="{{distances}}"
+        range-key="label"
+        value="{{distanceIndex}}"
+        @change="onRangeChanged"
+      >
+        {{distances[distanceIndex].label}}
+        <view class="icon triangle"/>
+      </picker>
+      <picker
+        class="filter"
+        range="{{sortings}}"
+        range-key="label"
+        value="{{sortingIndex}}"
+        @change="onSortingChanged"
+      >
+        {{sortings[sortingIndex].label}}
+        <view class="icon triangle"/>
+      </picker>
+      <picker
+        class="filter"
+        range="{{filters}}"
+        range-key="label"
+        value="{{filterIndex}}"
+        @change="onFilterChanged"
+      >
+        {{filters[filterIndex].label}}
+        <view class="icon triangle"/>
+      </picker>
+    </view>
+    <view class="gym-list">
+      <view class="item" wx:for="{{gyms}}" wx:key="id" @tap="detail({{item}})">
+        <image src="{{item.thumbnail}}" mode="aspectFill" />
+        <view class="summary">
+          <view class="title-line">
+            <view class="title">{{item.name}}</view>
+            <view class="location" wx:if="{{hasUserLocation}}">
+              {{distance.format(item.distance)}}
             </view>
           </view>
+          <view class="rating star-{{item.rating}}"/>
+          <view class="note">【{{item.district}}】{{item.category}}</view>
+          <view class="price"><text class="amount">¥10</text> 起</view>
         </view>
       </view>
     </view>
@@ -70,15 +62,10 @@
 import wepy from 'wepy'
 import API from '../api'
 import distance from '../filters/distance.wxs'
-import Header from '../components/header'
 
 export default class extends wepy.page {
   config = {
-    disableScroll: true
-  }
-
-  components = {
-    header: Header
+    navigationBarTitleText: '健身中心'
   }
 
   wxs = {
@@ -168,81 +155,66 @@ export default class extends wepy.page {
 
 <style lang="scss">
 .container {
-  padding-bottom: 80px;
-  background-color: #fff;
+  padding-bottom: calc(48px + env(safe-area-inset-bottom));
 }
 
 .banner {
-  position: relative;
-  padding-bottom: 8px;
   swiper {
-    height: 55vw;
+    height: 44vw;
     .image {
       height: 100%;
-      margin: 0 10px;
-      border-radius: 8px;
       overflow: hidden;
       background-repeat: no-repeat;
       background-position: center;
       background-size: cover;
     }
   }
-  search-bar {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    width: 70%;
-    margin: 10px auto;
-  }
 }
 
 .filter-area {
-  padding: 10px 0;
-  border-bottom: 1rpx solid #ebebeb;
+  padding: 9px 15px;
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
+  background-color: #F6F6F6;
   .filter {
-    flex: 1;
     display: flex;
     flex-direction: row;
     justify-content: center;
     align-items: center;
     font-size: 14px;
-    color: #4a4a4a;
+    color: #666;
     .icon {
       display: inline-block;
-      margin-left: 5px;
       height: 10px;
       width: 10px;
-      background-size: 10px 10px;
+      background-size: 10px 8px;
       background-repeat: no-repeat;
       background-position: center;
       &.triangle {
-        background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 292.362 292.362"><path fill="#4a4a4a" d="M286.935 69.377c-3.614-3.617-7.898-5.424-12.848-5.424H18.274c-4.952 0-9.233 1.807-12.85 5.424C1.807 72.998 0 77.279 0 82.228c0 4.948 1.807 9.229 5.424 12.847l127.907 127.907c3.621 3.617 7.902 5.428 12.85 5.428s9.233-1.811 12.847-5.428L286.935 95.074c3.613-3.617 5.427-7.898 5.427-12.847 0-4.948-1.814-9.229-5.427-12.85z"/></svg>');
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 292.362 292.362'%3E%3Cpath fill='%23999' d='M286.935 69.377c-3.614-3.617-7.898-5.424-12.848-5.424H18.274c-4.952 0-9.233 1.807-12.85 5.424C1.807 72.998 0 77.279 0 82.228c0 4.948 1.807 9.229 5.424 12.847l127.907 127.907c3.621 3.617 7.902 5.428 12.85 5.428s9.233-1.811 12.847-5.428L286.935 95.074c3.613-3.617 5.427-7.898 5.427-12.847 0-4.948-1.814-9.229-5.427-12.85z'/%3E%3C/svg%3E");
       }
       &.funnel {
-        background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="#4a4a4a" d="M2 2h13v2l-5 5v7l-3-2V9L2 4zM2 0h13v1H2V0z"/></svg>');
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23999' d='M2 2h13v2l-5 5v7l-3-2V9L2 4zM2 0h13v1H2V0z'/%3E%3C/svg%3E");
       }
     }
   }
 }
 
-.list {
+.gym-list {
   flex: 1;
-  background-color: #fff;
+  background-color: #657B8C;
   .item {
+    position: relative;
+    margin: 15px;
+    border-radius: 4px;
     padding: 10px;
     display: flex;
     flex-direction: row;
-    & + .item {
-      border-top: 1rpx solid #ebebeb;
-    }
+    background-color: #fff;
     image {
-      height: 78px;
-      width: 78px;
-      margin: 5px 15px;
-      border-radius: 5px;
+      height: 94px;
+      width: 94px;
     }
     .summary {
       flex: 1;
@@ -250,36 +222,33 @@ export default class extends wepy.page {
       display: flex;
       flex-direction: column;
       justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .title-line {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .title {
-      margin: 5px;
-      font-size: 14px;
-      font-weight: 600;
+      flex: 1;
+      font-size: 15px;
+      font-weight: 500;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
 
-    .rating {
-      height: 16px;
-      margin: 5px;
-      background-image: url('data:image/svg+xml, <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#ff6e00" d="M19,3H5C3.895,3,3,3.895,3,5v14c0,1.105,0.895,2,2,2h14c1.105,0,2-0.895,2-2V5C21,3.895,20.105,3,19,3z M16.23,18L12,15.45 L7.77,18l1.12-4.81L5.16,9.96l4.92-0.42L12,5l1.92,4.53l4.92,0.42l-3.73,3.23L16.23,18z"/></svg>');
-      background-size: 16px 16px;
-      background-repeat: repeat-x;
+    .location {
+      padding-left: 15px;
+      font-size: 13px;
+      color: #999;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23999' d='M12 0C7.038 0 3 4.066 3 9.065c0 7.103 8.154 14.437 8.501 14.745a.749.749 0 00.998.001C12.846 23.502 21 16.168 21 9.065 21 4.066 16.962 0 12 0zm0 14c-2.757 0-5-2.243-5-5s2.243-5 5-5 5 2.243 5 5-2.243 5-5 5z'/%3E%3C/svg%3E");
+      background-size: 13px 13px;
+      background-repeat: no-repeat;
       background-position: left center;
-      &.star-1 {
-        width: 16px;
-      }
-      &.star-2 {
-        width: 32px;
-      }
-      &.star-3 {
-        width: 48px;
-      }
-      &.star-4 {
-        width: 64px;
-      }
-      &.star-5 {
-        width: 80px;
-      }
     }
 
     .note {
@@ -287,8 +256,17 @@ export default class extends wepy.page {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
-      color: #9b9b9b;
+      color: #888;
       font-size: 11px;
+    }
+
+    .price {
+      font-size: 12px;
+      font-weight: 500;
+      color: #F86D24;
+      .amount {
+        font-size: 15px;
+      }
     }
   }
 }

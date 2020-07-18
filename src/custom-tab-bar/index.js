@@ -9,7 +9,6 @@ Component({
     list: []
   },
   ready: function() {
-    // 可以在这里 增加权限的判断
     this.setData({
       list: [
         {

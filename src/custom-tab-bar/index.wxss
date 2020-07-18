@@ -10,13 +10,30 @@
 }
 
 .tab-bar-border {
-  background-color: rgba(0, 0, 0, 0.33);
   position: absolute;
-  left: 0;
   top: 0;
-  width: 100%;
+  left: 0;
+  right: 0;
   height: 1px;
-  transform: scaleY(0.5);
+  background-color: #ccc;
+}
+
+@media
+only screen and (-webkit-min-device-pixel-ratio: 2),
+only screen and (min-device-pixel-ratio: 2) {
+  .tab-bar-border {
+    transform: translateY(-50%);
+    transform-origin: top;
+  }
+}
+
+@media
+only screen and (-webkit-min-device-pixel-ratio: 3),
+only screen and (min-device-pixel-ratio: 3) {
+  .tab-bar-border {
+    transform: translateY(-66.6666666%);
+    transform-origin: top;
+  }
 }
 
 .tab-bar-item {
@@ -28,11 +45,12 @@
   flex-direction: column;
 }
 
-.tab-bar-item cover-image {
-  width: 27px;
-  height: 27px;
+.tab-bar-item .icon {
+  margin: 3px;
+  width: 24px;
+  height: 24px;
 }
 
-.tab-bar-item cover-view {
-  font-size: 10px;
+.tab-bar-item .text {
+  font-size: 11px;
 }
