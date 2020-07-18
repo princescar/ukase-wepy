@@ -27,14 +27,16 @@
         </view>
       </view>
     </view>
-    <button
-      class="book-button"
-      open-type="getPhoneNumber"
-      disabled="{{!selectedDate}}"
-      @getphonenumber="onGetPhoneNumber"
-    >
-      确认
-    </button>
+    <view class="actions">
+      <button
+        class="block-button primary"
+        open-type="getPhoneNumber"
+        disabled="{{!selectedDate}}"
+        @getphonenumber="onGetPhoneNumber"
+      >
+        确认
+      </button>
+    </view>
   </view>
 </template>
 
@@ -151,6 +153,9 @@ export default class extends wepy.page {
 </script>
 
 <style lang="scss">
+.container {
+  padding-bottom: calc(45px + env(safe-area-inset-bottom));
+}
 .lesson-summary {
   padding: 20px 15px;
   & > .title {
@@ -227,7 +232,7 @@ export default class extends wepy.page {
     }
   }
 }
-.book-button {
+.actions {
   position: fixed;
   left: 0;
   right: 0;
@@ -235,12 +240,5 @@ export default class extends wepy.page {
   bottom: env(safe-area-inset-bottom);
   bottom: unquote('max(10px, env(safe-area-inset-bottom))');
   margin: 0 20px;
-  border: none;
-  border-radius: 999px;
-  line-height: 45px;
-  font-size: 15px;
-  font-weight: 500;
-  background: linear-gradient(90deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
-  color: #fff;
 }
 </style>

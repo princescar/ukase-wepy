@@ -51,7 +51,9 @@
           </view>
           <view class="rating star-{{item.rating}}"/>
           <view class="note">【{{item.district}}】{{item.category}}</view>
-          <view class="price"><text class="amount">¥{{item.leastAmount}}</text> 起</view>
+          <view class="price" wx:if="{{item.leastAmount}}">
+            <text class="amount">¥{{item.leastAmount}}</text> 起
+          </view>
         </view>
       </view>
     </view>

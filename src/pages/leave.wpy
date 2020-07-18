@@ -1,25 +1,33 @@
 <template>
-  <view class="container fixed-header" wx:if="{{gym && charge}}">
-    <header title="准备出场" />
+  <view class="container" wx:if="{{gym && charge}}">
     <view class="card">
-      <view class="title">{{gym.name}}</view>
-      <view class="note">您的入场时间是：{{charge.inTimeString}}</view>
-      <view class="note">您的出场时间是：{{charge.outTimeString}}</view>
-      <view class="note">停留时长为：{{charge.duration}}</view>
-      <view class="note">费用总计：{{charge.amount}}</view>
-    </view>
-    <view class="charge-list-wrapper">
-      <view class="title">计费详情</view>
-      <view class="charge-list">
-        <view class="charge-item" wx:for="{{charge.detail}}" wx:key="id">
-          <view>{{item.startString}}到{{item.endString}}</view>
-          <view>{{item.price}}元/小时</view>
+      <view class="title">锻炼总时长</view>
+      <view class="time">{{charge.duration}}</view>
+      <view class="date">{{charge.outTimeString}}</view>
+      <view class="detail-wrapper">
+        <view class="title">详情</view>
+        <view class="item">入场时间：{{charge.inTimeString}}</view>
+        <view class="item">出场时间：{{charge.outTimeString}}</view>
+        <view class="item">课程：无</view>
+      </view>
+      <view class="total-wrapper">
+        总费用
+        <text class="currency">¥</text>
+        <text class="amount">{{charge.amount}}</text>
+      </view>
+      <view class="charge-list-wrapper">
+        <view class="charge-list" wx:if="{{detailOpen}}">
+          <view class="item" wx:for="{{charge.detail}}" wx:key="id">
+            <view>{{item.startString}}到{{item.endString}}</view>
+            <view>{{item.price}}元/小时</view>
+          </view>
         </view>
+        <view class="toggle-button {{detailOpen ? 'on' : 'off'}}">计费详情</view>
       </view>
     </view>
-    <view class="tip">如停留时间内有课程，则课程时间内以及课程开始前10分钟和结束后15分钟不计费</view>
-    <view class="button" @tap="pay">
-      {{charge.amount > 0 ? '支付并出场' : '无需支付，直接出场'}}
+    <view class="actions">
+      <view class="tip">课程时间内不另计费，课程前后10分钟不计费</view>
+      <button class="block-button primary" @tap="pay">确认</button>
     </view>
   </view>
 </template>
@@ -29,21 +37,20 @@ import wepy from 'wepy'
 import dayjs from 'dayjs'
 import humanizeDuration from 'humanize-duration'
 import API from '../api'
-import Header from '../components/header'
 
 export default class extends wepy.page {
   config = {
-    navigationBarTextStyle: 'white'
-  }
-
-  components = {
-    header: Header
+    navigationBarTitleText: '出场',
+    backgroundColor: '#657B8C',
+    backgroundColorTop: '#657B8C',
+    backgroundColorBottom: '#657B8C'
   }
 
   data = {
     id: null,
     gym: null,
-    charge: null
+    charge: null,
+    detailOpen: false
   }
 
   methods = {
@@ -101,63 +108,47 @@ export default class extends wepy.page {
 </script>
 
 <style lang="scss">
-.main {
-  background-color: #fff;
+.container {
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  background-color: #657B8C;
 }
 .card {
-  padding: 20px;
-  padding-bottom: 30px;
-  .title {
-    font-size: 18px;
-    font-weight: 600;
-  }
-  .note {
-    margin-top: 15px;
-    margin-bottom: 5px;
-    font-size: 16px;
-  }
-}
-.charge-list-wrapper {
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
   margin: 20px;
-  padding: 10px 0;
+  border-radius: 4px;
+  min-height: 474px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #fff;
   .title {
-    text-align: center;
+    margin-top: 70px;
+    font-size: 17px;
   }
-  .charge-list {
-    .charge-item {
-      padding: 8px 0;
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      overflow: hidden;
-      font-size: 14px;
-    }
+  .time {
+    margin-top: 35px;
+    font-size: 34px;
+    font-weight: 500;
+  }
+  .date {
+    margin-top: 8px;
+    font-size: 15px;
+    color: #999;
   }
 }
 
-.tip {
-  margin: 20px;
-  font-size: 12px;
-  color: #9b9b9b;
-}
-
-.button {
+.actions {
   position: fixed;
-  bottom: 40px;
   left: 0;
   right: 0;
-  margin: 0 auto;
-  border-radius: 6px;
-  width: 200px;
-  height: 50px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 16px;
-  background-color: #38BA87;
-  color: #fff;
+  bottom: 10px;
+  bottom: env(safe-area-inset-bottom);
+  bottom: unquote('max(10px, env(safe-area-inset-bottom))');
+  margin: 0 20px;
+  .tip {
+    margin: 15px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,.5);
+  }
 }
 </style>

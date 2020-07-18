@@ -53,7 +53,22 @@
 		},
 		"miniprogram": {
 			"current": -1,
-			"list": []
+			"list": [
+				{
+					"id": -1,
+					"name": "pages/enter",
+					"pathName": "pages/enter",
+					"query": "id=GYM00001",
+					"scene": null
+				},
+				{
+					"id": 1,
+					"name": "pages/leave",
+					"pathName": "pages/leave",
+					"query": "id=GYM00001",
+					"scene": null
+				}
+			]
 		}
 	}
 }

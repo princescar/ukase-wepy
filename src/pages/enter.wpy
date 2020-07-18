@@ -1,26 +1,28 @@
 <template>
-  <view class="container fixed-header" wx:if="{{gym && preEntrance}}">
-    <header title="准备入场" />
+  <view class="container" wx:if="{{gym && preEntrance}}">
     <view class="card">
-      <view class="title">{{gym.name}}</view>
-      <view class="note">当前时间为：{{preEntrance.currentDate}}</view>
-    </view>
-    <view class="lesson-list-wrapper">
-      <view class="title">您今天的课程情况是</view>
-      <view class="lesson-list">
-        <view class="lesson-item" wx:for="{{preEntrance.todayLessons}}" wx:key="id">
-          <view>{{item.itemInfo.itemName}}</view>
-          <view>{{item.inTimeString}}-{{item.outTimeString}}</view>
-          <view>{{item.itemInfo.itemDuration}}分钟</view>
+      <view class="title">您的入场时间</view>
+      <view class="time">{{preEntrance.timeString}}</view>
+      <view class="date">{{preEntrance.dateString}}</view>
+      <view class="lesson-list-wrapper">
+        <view class="title" wx:if="{{preEntrance.todayLessons.length > 0}}">今日课程</view>
+        <view class="lesson-list" wx:if="{{preEntrance.todayLessons.length > 0}}">
+          <view class="item" wx:for="{{preEntrance.todayLessons}}" wx:key="id">
+            <view>{{item.itemInfo.itemName}}</view>
+            <view>{{item.inTimeString}}-{{item.outTimeString}}</view>
+            <view>{{item.itemInfo.itemDuration}}分钟</view>
+          </view>
         </view>
+        <view class="empty" wx:else>您正在自由锻炼中…</view>
       </view>
-      <view class="lesson-list-empty" wx:if="{{preEntrance.todayLessons.length === 0}}">无</view>
     </view>
-    <view class="tip" wx:if="{{preEntrance.todayLessons.length > 0 && preEntrance.needExtraCharge}}">
-      <view>温馨提示：</view>
-      <view>请勿过早进入场地，否则会产生其他费用。</view>
+    <view class="actions">
+      <view class="tip" wx:if="{{preEntrance.needExtraCharge}}">
+        请勿提前太早时间入场，否则会产生其他费用
+      </view>
+      <button class="block-button" @tap="leave">我要出场</button>
+      <button class="block-button primary" @tap="enter">确认</button>
     </view>
-    <view class="button" @tap="enter">入场</view>
   </view>
 </template>
 
@@ -28,15 +30,13 @@
 import wepy from 'wepy'
 import dayjs from 'dayjs'
 import API from '../api'
-import Header from '../components/header'
 
 export default class extends wepy.page {
   config = {
-    navigationBarTextStyle: 'white'
-  }
-
-  components = {
-    header: Header
+    navigationBarTitleText: '入场',
+    backgroundColor: '#657B8C',
+    backgroundColorTop: '#657B8C',
+    backgroundColorBottom: '#657B8C'
   }
 
   data = {
@@ -53,7 +53,14 @@ export default class extends wepy.page {
         content: `记时开始时间${inTime}`,
         showCancel: false
       })
-      wepy.switchTab({ url: '/pages/tab-gyms' })
+      wepy.switchTab({ url: '/pages/tab-mine' })
+    },
+    leave() {
+      wepy.showModal({
+        title: '提示',
+        content: `请联系场馆内工作人员`,
+        showCancel: false
+      })
     }
   }
 
@@ -62,12 +69,15 @@ export default class extends wepy.page {
     this.preEntrance = await API.preEntranceCheck(this.id)
     if (!this.preEntrance.canEnterInto) {
       await wepy.showModal({
-        title: '提示',
-        content: '无法入场，您可能已在场地内，请重新扫码',
+        title: '错误',
+        content: '入场失败，请重试',
         showCancel: false
       })
-      wepy.switchTab({ url: '/pages/tab-gyms' })
+      wepy.switchTab({ url: '/pages/tab-mine' })
+      return
     }
+    this.preEntrance.timeString = dayjs(this.preEntrance.currentDate).format('HH:mm')
+    this.preEntrance.dateString = dayjs(this.preEntrance.currentDate).format('YYYY-MM-DD')
     this.preEntrance.todayLessons.forEach(x => {
       x.inTimeString = dayjs(x.inTime).format('HH:mm')
       x.outTimeString = dayjs(x.outTime).format('HH:mm')
@@ -83,32 +93,45 @@ export default class extends wepy.page {
 </script>
 
 <style lang="scss">
-.main {
-  background-color: #fff;
+.container {
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+  background-color: #657B8C;
 }
 .card {
-  padding: 20px;
-  padding-bottom: 30px;
+  margin: 20px;
+  border-radius: 4px;
+  min-height: 474px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #fff;
   .title {
-    font-size: 18px;
-    font-weight: 600;
+    margin-top: 70px;
+    font-size: 17px;
   }
-  .note {
-    margin-top: 15px;
-    margin-bottom: 5px;
-    font-size: 16px;
+  .time {
+    margin-top: 35px;
+    font-size: 34px;
+    font-weight: 500;
+  }
+  .date {
+    margin-top: 8px;
+    font-size: 15px;
+    color: #999;
   }
 }
 .lesson-list-wrapper {
-  border-top: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-  margin: 20px;
-  padding: 10px 0;
+  align-self: stretch;
+  margin: 15px;
+  margin-top: 30px;
+  border-top: 1px solid #E8ECF0;
   .title {
-    text-align: center;
+    margin: 15px;
+    color: #666;
+    font-weight: 500;
   }
   .lesson-list {
-    .lesson-item {
+    .item {
       padding: 8px 0;
       display: flex;
       flex-direction: row;
@@ -118,28 +141,33 @@ export default class extends wepy.page {
       font-size: 14px;
     }
   }
+  .empty {
+    margin-top: 50px;
+    height: 170px;
+    padding-top: 151px;
+    text-align: center;
+    font-size: 12px;
+    background-image: url('https://i.loli.net/2020/07/19/BdviM8IE6wkVFCx.png');
+    background-size: 193px 141px;
+    background-position: top center;
+    background-repeat: no-repeat;
+    color: #ccc;
+  }
 }
 
-.tip {
-  margin: 20px;
-  font-size: 12px;
-  color: #9b9b9b;
-}
-
-.button {
+.actions {
   position: fixed;
-  bottom: 40px;
   left: 0;
   right: 0;
-  margin: 0 auto;
-  border-radius: 6px;
-  width: 200px;
-  height: 50px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 16px;
-  background-color: #38BA87;
-  color: #fff;
+  bottom: 10px;
+  bottom: env(safe-area-inset-bottom);
+  bottom: unquote('max(10px, env(safe-area-inset-bottom))');
+  margin: 0 20px;
+  .tip {
+    margin: 15px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,.5);
+  }
 }
 </style>
