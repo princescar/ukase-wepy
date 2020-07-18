@@ -30,6 +30,7 @@
     <button
       class="book-button"
       open-type="getPhoneNumber"
+      disabled="{{!selectedDate}}"
       @getphonenumber="onGetPhoneNumber"
     >
       确认
@@ -123,9 +124,6 @@ export default class extends wepy.page {
         remainMap[item.usageDate] = this.gymItem.reserveCount - item.reserveCount
       })
     }
-    remainMap['2020-07-18'] = 2
-    remainMap['2020-07-21'] = 4
-    remainMap['2020-07-22'] = 8
     this.remainMap = remainMap
   }
 
@@ -137,7 +135,9 @@ export default class extends wepy.page {
 
     this.initRemainMap()
     const defaultDate = this.dates.find(date => this.remainMap[date.date] > 0)
-    this.selectedDate = defaultDate.date
+    if (defaultDate) {
+      this.selectedDate = defaultDate.date
+    }
 
     this.$apply()
   }
