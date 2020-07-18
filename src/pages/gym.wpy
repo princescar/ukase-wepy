@@ -61,8 +61,8 @@
           <view class="lesson" wx:for="{{gym.lessonItems}}" wx:key="itemChargeCode" @tap="book({{item}})">
             <view class="icon"/>
             <view class="title">{{item.itemName}}</view>
-            <view class="note">{{item.chargeStartTimeString}}-{{item.chargeEndTimeString}} （{{item.itemDuration}}分钟）</view>
-            <view class="note">{{item.description}}</view>
+            <view class="note">时间：{{item.chargeStartTimeString}}-{{item.chargeEndTimeString}} （{{item.itemDuration}}分钟）</view>
+            <view class="note">教练：{{item.itemCoach}}</view>
             <view class="book">¥{{item.chargePrice}}</view>
           </view>
         </view>
