@@ -5,11 +5,11 @@
 		"es6": false,
 		"postcss": false,
 		"preloadBackgroundData": false,
-		"minified": true,
+		"minified": false,
 		"newFeature": true,
 		"coverView": true,
 		"autoAudits": false,
-		"showShadowRootInWxmlPanel": true,
+		"showShadowRootInWxmlPanel": false,
 		"scopeDataCheck": false,
 		"checkInvalidKey": true,
 		"checkSiteMap": false,
@@ -21,14 +21,14 @@
 			"outputPath": ""
 		},
 		"useIsolateContext": true,
-		"useCompilerModule": false,
+		"useCompilerModule": true,
 		"userConfirmedUseCompilerModuleSwitch": false
 	},
 	"compileType": "miniprogram",
 	"appid": "wxa3397abb3b70172e",
 	"projectname": "ukase",
 	"miniprogramRoot": "dist/",
-	"libVersion": "2.1.0",
+	"libVersion": "2.11.3",
 	"simulatorType": "wechat",
 	"simulatorPluginLibVersion": {},
 	"condition": {
@@ -65,7 +65,7 @@
 					"id": 1,
 					"name": "pages/leave",
 					"pathName": "pages/leave",
-					"query": "id=GYM00001",
+					"query": "id=GYM00002&code=OUT_CODE_002",
 					"scene": null
 				}
 			]
