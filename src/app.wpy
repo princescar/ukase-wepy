@@ -11,7 +11,6 @@ export default class extends wepy.app {
       'pages/index',
       'pages/tab-gyms',
       'pages/tab-mine',
-      'pages/tab-scan',
       'pages/gym',
       'pages/gym-item',
       'pages/favorite',
@@ -20,34 +19,15 @@ export default class extends wepy.app {
     ],
     tabBar: {
       custom: true,
-      color: '#7C7C7C',
-      selectedColor: '#32A971',
-      backgroundColor: '#FAFAFA',
-      borderStyle: 'white',
       list: [
-        {
-          pagePath: 'pages/tab-gyms',
-          text: '健身中心',
-          iconPath: 'images/tab-gym.png',
-          selectedIconPath: 'images/tab-gym-d.png'
-        },
-        {
-          pagePath: 'pages/tab-scan',
-          text: '出入扫码',
-          iconPath: 'images/tab-scan.png',
-          selectedIconPath: 'images/tab-scan-d.png'
-        },
-        {
-          pagePath: 'pages/tab-mine',
-          text: '我的',
-          iconPath: 'images/tab-mine.png',
-          selectedIconPath: 'images/tab-mine-d.png'
-        }
+        { pagePath: 'pages/tab-gyms' },
+        { pagePath: 'pages/tab-mine' }
       ]
     },
     window: {
       navigationBarBackgroundColor: '#EDEDED',
-      navigationBarTextStyle: 'black'
+      navigationBarTextStyle: 'black',
+      backgroundColorTop: '#EDEDED'
     },
     permission: {
       'scope.userLocation': {
@@ -73,49 +53,11 @@ export default class extends wepy.app {
 
 <style lang="scss">
 page {
-  width: 100%;
-  height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
   color: #333;
 }
 
 view {
   box-sizing: border-box;
-}
-
-.container {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-  &.fixed-header {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    &>.main {
-      flex: 1;
-    }
-  }
-}
-
-.y-scroll {
-  overflow: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  &>view {
-    min-height: 100.5%;
-  }
-}
-
-.x-scroll {
-  overflow: hidden;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  &>view {
-    min-width: 100.5%;
-  }
 }
 
 .dialog-wrapper {
@@ -262,5 +204,14 @@ view {
     background: linear-gradient(90deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
     color: #fff;
   }
+}
+
+.footer-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 20px;
+  padding: 0 20px;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 </style>

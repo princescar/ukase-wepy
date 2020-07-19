@@ -27,12 +27,21 @@
         </view>
       </view>
     </view>
-    <view class="actions">
+    <view class="footer-bar">
       <button
+        wx:if="{{getMobile}}"
         class="block-button primary"
         open-type="getPhoneNumber"
         disabled="{{!selectedDate}}"
         @getphonenumber="onGetPhoneNumber"
+      >
+        确认
+      </button>
+      <button
+        wx:if="{{!getMobile}}"
+        class="block-button primary"
+        disabled="{{!selectedDate}}"
+        @tap="book"
       >
         确认
       </button>
@@ -44,10 +53,11 @@
 import wepy from 'wepy'
 import dayjs from 'dayjs'
 import API from '../api'
+import Runtime from '../services/runtime'
 
 export default class extends wepy.page {
   config = {
-    navigationBarTitleText: '预订信息'
+    navigationBarTitleText: '预定信息'
   }
 
   data = {
@@ -56,7 +66,7 @@ export default class extends wepy.page {
     dates: [],
     remainMap: {},
     selectedDate: null,
-    mobile: null
+    getMobile: false
   }
 
   methods = {
@@ -76,26 +86,24 @@ export default class extends wepy.page {
         wepy.showToast({ title: '请授权手机号', icon: 'none' })
         return
       }
-      await this.decrypt(iv, encryptedData)
-      this.book()
+      await API.setUserInfo(iv, encryptedData)
+      Runtime.userInfo = await API.getUserInfo()
+      this.getMobile = !Runtime.userInfo || !Runtime.userInfo.phone
+      this.$apply()
+      await this.book()
     }
-  }
-
-  async decrypt(iv, encryptedData) {
-    console.log(iv, encryptedData)
-    // await API.setPhoneNumber(iv, encryptedData)
   }
 
   async book() {
     const { gymCode, itemCode, itemChargeCode } = this.gymItem
-    const { orderNo } = await API.newBooking(gymCode, itemCode, itemChargeCode, this.selectedDate.date, this.mobile)
+    const { orderNo } = await API.newBooking(gymCode, itemCode, itemChargeCode, this.selectedDate)
     const { params } = await API.pay(orderNo)
     const paramsObj = JSON.parse(params)
     await wepy.requestPayment(paramsObj)
 
     await wepy.showModal({
       title: '预定成功',
-      content: `已成功预定${this.selectedDate.date} ${this.selectedDate.weekday} ${this.gymItem.itemName}`,
+      content: `已成功预定${this.selectedDate} ${this.gymItem.itemName}`,
       showCancel: false
     })
 
@@ -148,12 +156,18 @@ export default class extends wepy.page {
     this.id = opts.id
     this.initDates()
     this.loadData()
+    if (!Runtime.userInfo || !Runtime.userInfo.phone) {
+      this.getMobile = true
+      Runtime.keepSession()
+    }
   }
 }
 </script>
 
 <style lang="scss">
 .container {
+  position: relative;
+  min-height: 100vh;
   padding-bottom: calc(45px + env(safe-area-inset-bottom));
 }
 .lesson-summary {
@@ -231,14 +245,5 @@ export default class extends wepy.page {
       }
     }
   }
-}
-.actions {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 10px;
-  bottom: env(safe-area-inset-bottom);
-  bottom: unquote('max(10px, env(safe-area-inset-bottom))');
-  margin: 0 20px;
 }
 </style>

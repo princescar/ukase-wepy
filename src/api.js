@@ -40,14 +40,12 @@ export default {
   async getGymItem(itemChargeCode) {
     return get('/gymItem/detail', { itemChargeCode })
   },
-  newBooking(gymCode, itemCode, itemChargeCode, reserveTime, reservePhone) {
+  newBooking(gymCode, itemCode, itemChargeCode, reserveTime) {
     return post('/userOrder/createPreOrder', {
       gymCode,
       itemCode,
       itemChargeCode,
-      reserveTime,
-      reservePhone,
-      reserveName: '张三'
+      reserveTime
     })
   },
   setGymFavor(gymCode, favor) {
@@ -72,14 +70,20 @@ export default {
   enter(gymCode) {
     return post('/userOrder/intoGym', { gymCode })
   },
-  leave(gymCode) {
-    return post('/userOrder/outOfGym', { gymCode })
+  leave(gymCode, codeNo) {
+    return post('/userOrder/outOfGym', { gymCode, codeNo })
   },
   pay(orderNo) {
     return post('/userOrderPayFlow/createPayOrder', { orderNo, payMethod: 'wechat_mp' })
   },
   zeroPay(orderNo) {
     return post('/userOrderPayFlow/createZeroPayOrder', { orderNo })
+  },
+  setUserInfo(iv, encryptedData) {
+    return post('/user/uploadUserInfo', { iv, encryptedData })
+  },
+  getUserInfo() {
+    return get('/user/userInfo')
   }
 }
 

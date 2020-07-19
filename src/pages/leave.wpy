@@ -18,14 +18,18 @@
       <view class="charge-list-wrapper">
         <view class="charge-list" wx:if="{{detailOpen}}">
           <view class="item" wx:for="{{charge.detail}}" wx:key="id">
-            <view>{{item.startString}}到{{item.endString}}</view>
-            <view>{{item.price}}元/小时</view>
+            {{item.startString}}-{{item.endString}} ¥{{item.price}}/小时；
           </view>
         </view>
-        <view class="toggle-button {{detailOpen ? 'on' : 'off'}}">计费详情</view>
+        <view
+          class="toggle-button {{detailOpen ? 'on' : 'off'}}"
+          @tap="toggleDetail"
+        >
+          {{detailOpen ? '收起详情' : '明细详情'}}
+        </view>
       </view>
     </view>
-    <view class="actions">
+    <view class="footer-bar">
       <view class="tip">课程时间内不另计费，课程前后10分钟不计费</view>
       <button class="block-button primary" @tap="pay">确认</button>
     </view>
@@ -43,17 +47,22 @@ export default class extends wepy.page {
     navigationBarTitleText: '出场',
     backgroundColor: '#657B8C',
     backgroundColorTop: '#657B8C',
-    backgroundColorBottom: '#657B8C'
+    backgroundColorBottom: '#657B8C',
+    disableScroll: true
   }
 
   data = {
     id: null,
+    code: null,
     gym: null,
     charge: null,
     detailOpen: false
   }
 
   methods = {
+    toggleDetail() {
+      this.detailOpen = !this.detailOpen
+    },
     async pay() {
       try {
         if (this.charge && this.charge.amount > 0) {
@@ -63,24 +72,16 @@ export default class extends wepy.page {
         } else {
           await API.zeroPay(this.charge.orderNo)
         }
-        await wepy.showModal({
-          content: '成功出场，欢迎您下次光临',
-          showCancel: false
-        })
+        await wepy.showModal({ content: '成功出场，欢迎您下次光临', showCancel: false })
         wepy.switchTab({ url: '/pages/tab-gyms' })
       } catch (e) {
-        await wepy.showModal({
-          content: '成功失败，请重试',
-          showCancel: false
-        })
-        await this.loadData()
       }
     }
   }
 
   async loadData() {
     this.gym = await API.getGym(this.id)
-    this.charge = await API.leave(this.id)
+    this.charge = await API.leave(this.id, this.code)
     const { inTime, outTime } = this.charge
     this.charge.inTimeString = dayjs(inTime).format('YYYY-MM-DD HH:mm')
     this.charge.outTimeString = dayjs(outTime).format('YYYY-MM-DD HH:mm')
@@ -102,53 +103,198 @@ export default class extends wepy.page {
 
   onLoad(opts) {
     this.id = opts.id
+    this.code = opts.code
     this.loadData()
   }
 }
 </script>
 
 <style lang="scss">
-.container {
-  padding-bottom: calc(100px + env(safe-area-inset-bottom));
+page {
   background-color: #657B8C;
+}
+.container {
+  position: relative;
+  height: 100vh;
+  background-color: #657B8C;
+  overflow: hidden;
 }
 .card {
   margin: 20px;
   border-radius: 4px;
-  min-height: 474px;
+  padding: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
   background-color: #fff;
-  .title {
-    margin-top: 70px;
+  & > .title {
+    margin-top: 55px;
     font-size: 17px;
   }
-  .time {
+  & > .time {
     margin-top: 35px;
     font-size: 34px;
     font-weight: 500;
   }
-  .date {
+  & > .date {
     margin-top: 8px;
     font-size: 15px;
     color: #999;
   }
 }
 
-.actions {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 10px;
-  bottom: env(safe-area-inset-bottom);
-  bottom: unquote('max(10px, env(safe-area-inset-bottom))');
-  margin: 0 20px;
+.detail-wrapper {
+  align-self: stretch;
+  margin-top: 30px;
+  margin-bottom: 10px;
+  border-top: 1px solid #E8ECF0;
+  .title {
+    margin: 15px 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+  }
+  .item {
+    font-size: 13px;
+    & + .item {
+      margin-top: 8px;
+    }
+  }
+}
+
+.total-wrapper {
+  align-self: stretch;
+  margin-top: 30px;
+  border-top: 1px solid #E8ECF0;
+  padding-top: 16px;
+  text-align: right;
+  vertical-align: baseline;
+  font-size: 13px;
+  color: #999;
+  .currency {
+    margin-left: 5px;
+    font-size: 14px;
+    color: #333;
+  }
+  .amount {
+    margin-left: 5px;
+    font-size: 20px;
+    font-weight: 500;
+    color: #333;
+  }
+}
+
+.charge-list-wrapper {
+  align-self: stretch;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.charge-list {
+  align-self: stretch;
+  margin-bottom: 15px;
+  padding: 15px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  font-size: 13px;
+  background-color: #E8ECF0;
+  color: #666;
+}
+
+.toggle-button {
+  position: relative;
+  border: 1px solid #eee;
+  border-radius: 999px;
+  width: 88px;
+  padding: 3px 15px;
+  padding-right: 27px;
+  font-size: 11px;
+  color: #999;
+  &:before, &:after {
+    position: absolute;
+    content: '';
+    top: 9px;
+    right: 12px;
+    border-radius: 999px;
+    width: 5px;
+    height: 1px;
+    transform: rotate(-45deg);
+    transform-origin: center right;
+    background-color: #666;
+  }
+  &:after {
+    top: 9px;
+    right: 14px;
+    transform: rotate(45deg);
+    transform-origin: center left;
+  }
+  &.on {
+    &:before {
+      top: 12px;
+      transform: rotate(45deg);
+    }
+    &:after {
+      top: 12px;
+      transform: rotate(-45deg);
+    }
+  }
+}
+
+.tip {
+  margin: 15px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(255,255,255,.5);
+}
+
+@media
+only screen and (max-height: 700px) {
+  .card {
+    & > .title {
+      margin-top: 30px;
+    }
+    & > .time {
+      margin-top: 20px;
+    }
+    & > .date {
+      margin-top: 5px;
+    }
+    .detail-wrapper {
+      margin-bottom: 0;
+    }
+  }
   .tip {
-    margin: 15px;
-    text-align: center;
-    font-size: 12px;
-    color: rgba(255,255,255,.5);
+    margin: 0;
+    margin-top: 5px;
+    margin-bottom: 10px;
+  }
+}
+
+@media
+only screen and (max-height: 600px) {
+  .card {
+    margin: 10px;
+    & > .title {
+      margin-top: 10px;
+    }
+    & > .time {
+      margin-top: 15px;
+    }
+    & > .date {
+      margin-top: 0;
+    }
+    .detail-wrapper {
+      margin-top: 10px;
+      margin-bottom: 0;
+    }
+  }
+  .tip {
+    margin: 0;
+    margin-top: 5px;
+    margin-bottom: 10px;
   }
 }
 </style>
