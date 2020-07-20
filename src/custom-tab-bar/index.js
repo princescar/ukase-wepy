@@ -1,4 +1,4 @@
-const API = require('../api').default
+const Scan = require('../services/scan').default
 
 Component({
   data: {
@@ -41,32 +41,7 @@ Component({
       wx.scanCode({
         scanType: 'qrCode',
         success(res) {
-          console.log(res.result)
-
-          if (!res.result) {
-            wx.showToast({ title: '未扫瞄到二维码', icon: 'none' })
-            return
-          }
-
-          const [action, gymCode, codeNo] = res.result.split(',')
-
-          if (action !== 'enter' && action !== 'leave' || !gymCode) {
-            wx.showToast({ title: '无法识别的二维码', icon: 'none' })
-            return
-          }
-
-          if (action === 'leave' && !codeNo) {
-            wx.showToast({ title: '无法识别的二维码', icon: 'none' })
-            return
-          }
-
-          API.preEntranceCheck(gymCode).then(function(res) {
-            if (res.canEnterInto) {
-              wx.navigateTo({ url: `/pages/enter?id=${gymCode}` })
-            } else {
-              wx.navigateTo({ url: `/pages/leave?id=${gymCode}&code=${codeNo}` })
-            }
-          })
+          Scan.handle(res.result)
         }
       })
     }

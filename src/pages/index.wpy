@@ -8,6 +8,7 @@
 import wepy from 'wepy'
 import API from '../api'
 import Runtime from '../services/runtime'
+import Scan from '../services/scan'
 
 export default class extends wepy.page {
   config = {
@@ -15,13 +16,20 @@ export default class extends wepy.page {
     disableScroll: true
   }
 
-  async onLoad(opts) {
+  async onLoad({ q, r }) {
     const { code } = await wepy.login()
     const token = await API.login(code)
     wepy.setStorageSync('token', token)
     Runtime.userInfo = await API.getUserInfo()
 
-    const next = opts.r || '/pages/tab-gyms'
+    if (q) {
+      const url = decodeURIComponent(q)
+      if (Scan.handle(url, true)) {
+        return
+      }
+    }
+
+    const next = r || '/pages/tab-gyms'
     wepy.reLaunch({ url: next })
   }
 }
