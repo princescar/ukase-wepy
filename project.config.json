@@ -22,7 +22,7 @@
 		},
 		"useIsolateContext": true,
 		"useCompilerModule": false,
-		"userConfirmedUseCompilerModuleSwitch": false
+		"userConfirmedUseCompilerModuleSwitch": true
 	},
 	"compileType": "miniprogram",
 	"appid": "wxa3397abb3b70172e",
@@ -66,6 +66,13 @@
 					"name": "pages/leave",
 					"pathName": "pages/leave",
 					"query": "id=GYM00002&code=OUT_CODE_002",
+					"scene": null
+				},
+				{
+					"id": -1,
+					"name": "pages/tab-mine",
+					"pathName": "pages/tab-mine",
+					"query": "",
 					"scene": null
 				}
 			]

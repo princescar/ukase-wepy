@@ -94,7 +94,6 @@ export default class extends wepy.page {
   }
 
   methods = {
-    doNothing() {},
     activeSlideChange(event) {
       this.currentSlide = event.detail.current
     },

@@ -1,45 +1,79 @@
 <template>
   <view class="container">
-    <header>
-      <view slot="left" class="setting" @longpress="openSetting"/>
-      <view slot="children" class="user-info">
-        <open-data class="avatar" type="userAvatarUrl" />
-        <view class="name">
-          <open-data type="userNickName" />
+    <view class="header">
+      <view class="user">
+        <view class="avatar"></view>
+        <view class="name">张三</view>
+      </view>
+      <view class="module-list">
+        <view class="item" @tap="go('wallet')">
+          <view class="icon wallet"/>钱包
+        </view>
+        <view class="item" @tap="go('order')">
+          <view class="icon order"/>订单
+        </view>
+        <view class="item" @tap="go('favor')">
+          <view class="icon favor"/>收藏
+        </view>
+        <view class="item" @tap="go('coupon')">
+          <view class="icon coupon"/>优惠券
         </view>
       </view>
-      <view slot="children" class="my-list">
-        <view class="item">
-          <view class="icon wallet"/>
-          <view class="name">钱包</view>
-        </view>
-        <view class="item">
-          <view class="icon order"/>
-          <view class="name">订单</view>
-        </view>
-        <view class="item">
-          <view class="icon favor" @tap="favor" />
-          <view class="name">收藏</view>
-        </view>
+    </view>
+    <view class="current-activity" wx:if="{{activity}}">
+      <view class="time-wrapper">
+        <view class="title">锻炼时长</view>
+        <view class="time">{{activity.duration}}</view>
       </view>
-    </header>
-
-    <calendar :scheduleNumOfDay.sync="dates" @selectDay.user="onDateSelected" @nextMonth="onNextWeek" />
-
-    <view class="order-list">
-      <view class="card" wx:for="{{dayActivities}}" wx:key="id">
-        <view class="summary">
-          <view class="title">{{item.gymName}}</view>
-          <view class="title">
-            <view class="store">
-              {{item.trackTypeString}}
-              {{item.trackTypeDesc === 'gymItemOrder' ? item.extraInfoObj.itemName : ''}}
-            </view>
-            <view class="status">{{item.timeString}}</view>
+      <text class="activity">您已入场 {{activity.gymName}}</text>
+    </view>
+    <view class="calendar">
+      <view class="title-line">
+        <view class="title">您的健身日历</view>
+        <view class="weekday">{{today}}</view>
+      </view>
+      <view class="date-list">
+        <view
+          wx:for="{{dates}}"
+          wx:key="date"
+          class="{{item.date === selectedDate ? 'item selected' : 'item'}}"
+          @tap="selectDate({{item}})"
+        >
+          <view class="weekday">{{item.weekday}}</view>
+          <view class="day">{{item.day}}</view>
+          <view class="badge" wx:if="{{eventMap[item.date].length > 0}}">
+            {{eventMap[item.date].length}}
           </view>
         </view>
       </view>
-      <view class="empty" wx:if="{{dayActivities.length === 0}}">该日无预约</view>
+      <view class="course-list" wx:if="{{eventMap[selectedDate].length > 0}}">
+        <!-- <view class="item coming">
+          <view class="time">13:20-14:05</view>
+          <view class="name">瑜伽课L1</view>
+          <view class="note">梦洁健身  教练：张教练</view>
+          <view class="hint">距离开始还有15分43秒</view>
+        </view> -->
+        <view
+          wx:for="{{eventMap[selectedDate]}}"
+          wx:key="id"
+          class="item {{item.status}}"
+        >
+          <view class="time">
+            {{item.extraInfo.chargeStartTimeString}}-
+            {{item.extraInfo.chargeEndTimeString}}
+          </view>
+          <view class="name">{{item.extraInfo.itemName}}</view>
+          <view class="note">{{item.gymName}}  教练：{{item.extraInfo.itemCoach}}</view>
+          <view class="hint" wx:if="{{item.status === 'coming'}}">未开始</view>
+          <view class="hint" wx:if="{{item.status === 'near'}}">距开始还有{{item.timeBeforeStart}}</view>
+          <view class="hint" wx:if="{{item.status === 'ongoing'}}">运动中</view>
+          <view class="hint" wx:if="{{item.status === 'past'}}">已结束</view>
+        </view>
+      </view>
+    </view>
+    <view class="tip">
+      <view>请阅读《用户协议》和《隐私协议》</view>
+      <button class="contact" open-type="contat">在线客服</button>
     </view>
   </view>
 </template>
@@ -47,224 +81,376 @@
 <script>
 import wepy from 'wepy'
 import dayjs from 'dayjs'
-import {
-  groupBy,
-  map,
-  filter
-} from 'lodash'
+import humanizeDuration from 'humanize-duration'
 import API from '../api'
-import date from '../filters/date.wxs'
-import Header from '../components/header'
-import Calendar from '../components/calendar'
 
 export default class extends wepy.page {
-  components = {
-    header: Header,
-    calendar: Calendar
-  }
-
-  wxs = {
-    date
+  config = {
+    navigationBarTitleText: '我的'
   }
 
   data = {
-    activities: [],
-    selectedDate: dayjs().format('YYYY-MM-DD'),
-    startDate: dayjs().add(-30, 'days').format('YYYY-MM-DD'),
-    endDate: dayjs().add(30, 'days').format('YYYY-MM-DD'),
-    dialogOpen: false
-  }
-
-  computed = {
-    dates() {
-      const activities = groupBy(this.activities, x => dayjs(x.gmtTime).format('YYYY-MM-DD'))
-
-      return map(activities, (items, day) => {
-        return {
-          day,
-          num: items.length
-        }
-      })
-    },
-    dayActivities() {
-      return filter(this.activities, x => dayjs(x.gmtTime).isSame(this.selectedDate && this.selectedDate.fullDate, 'day'))
-    }
+    activity: null,
+    today: '',
+    dates: [],
+    selectedDate: null,
+    eventMap: {}
   }
 
   methods = {
-    doNothing() {},
-    onDateSelected(date) {
-      this.selectedDate = date
-    },
-    onNextWeek() {
-      console.log('NEXT_WEEK')
-    },
-    openSetting() {
-      wepy.setEnableDebug({ enableDebug: true })
-    },
-    favor() {
-      wepy.navigateTo({ url: 'favorite' })
+    selectDate(date) {
+      this.selectedDate = date.date
     }
   }
 
-  async loadBookings() {
-    this.activities = await API.getMyTrack(this.startDate, this.endDate)
-    this.activities.forEach(x => {
-      x.trackTypeString = {
-        gymIn: '入场',
-        gymOut: '出场',
-        gymItemOrder: '预约课程'
-      }[x.trackTypeDesc] || x.trackTypeDesc
-      if (x.extraInfo) {
-        x.extraInfoObj = JSON.parse(x.extraInfo)
+  initDates() {
+    const dates = []
+    for (let i = 0; i < 7; i++) {
+      const date = dayjs().add(i, 'day')
+      const item = {
+        date: date.format('YYYY-MM-DD'),
+        weekday: date.format('dd'),
+        day: date.format('D')
       }
-      x.timeString = dayjs(x.gmtTime).format('HH:mm')
+      if (date.isSame(dayjs(), 'day')) {
+        item.day = '今天'
+      }
+      dates.push(item)
+    }
+    this.dates = dates
+
+    const today = dayjs()
+    this.selectedDate = today.format('YYYY-MM-DD')
+    this.today = today.format('dddd')
+  }
+
+  async loadActivity() {
+    this.activity = await API.currentActivity()
+    if (this.activity != null) {
+      const { gmtTime } = this.activity
+      this.activity.duration = humanizeDuration(dayjs(gmtTime) - dayjs(), {
+        language: 'zh_CN',
+        units: ['m'],
+        maxDecimalPoints: 0,
+        delimiter: ''
+      })
+    }
+    this.$apply()
+  }
+
+  async loadCalendar() {
+    const startDate = this.dates[0].date
+    const endDate = this.dates[this.dates.length - 1].date
+    const events = await API.calendar(startDate, endDate)
+    const courses = events.filter(x => x.trackTypeDesc === 'gymItemOrder')
+
+    const now = dayjs()
+
+    courses.forEach(x => {
+      x.extraInfo = JSON.parse(x.extraInfo)
+      const date = dayjs(x.gmtTime).format('YYYY-MM-DD')
+      const startTime = dayjs(date + ' ' + x.extraInfo.chargeStartTime)
+      const endTime = dayjs(date + ' ' + x.extraInfo.chargeEndTime)
+
+      x.extraInfo.chargeStartTimeString = startTime.format('HH:mm')
+      x.extraInfo.chargeEndTimeString = endTime.format('HH:mm')
+
+      if (now.isBefore(startTime.subtract(30, 'minutes'))) {
+        x.status = 'coming'
+      } else if (now.isBefore(startTime)) {
+        x.status = 'near'
+        x.timeBeforeStart = humanizeDuration(startTime - now, {
+          language: 'zh_CN',
+          units: ['m'],
+          maxDecimalPoints: 0,
+          spacer: '',
+          delimiter: ''
+        })
+      } else if (now.isBefore(endTime)) {
+        x.status = 'ongoing'
+      } else {
+        x.status = 'past'
+      }
+
+      if (!this.eventMap[date]) {
+        this.eventMap[date] = []
+      }
+      this.eventMap[date].push(x)
     })
+    console.log(this.eventMap)
     this.$apply()
   }
 
   onShow() {
-    this.loadBookings()
     if (typeof this.$wxpage.getTabBar === 'function' && this.$wxpage.getTabBar()) {
       this.$wxpage.getTabBar().setData({ selected: 2 })
     }
+    this.loadActivity()
+    this.loadCalendar()
+  }
+
+  onLoad() {
+    this.initDates()
   }
 }
 </script>
 
 <style lang="scss">
+.container {
+  position: relative;
+  min-height: 100vh;
+  padding-bottom: calc(110px + env(safe-area-inset-bottom));
+}
+
 .header {
   position: relative;
-  margin-bottom: 10px;
-  padding-top: 20px;
-  background: linear-gradient(
-      247deg,
-      rgba(255, 255, 255, 1) 0%,
-      rgba(232, 255, 225, 1) 100%
-    )
-    rgba(255, 255, 255, 1);
-  box-shadow: 0px 5px 10px 0px rgba(0, 0, 0, 0.05);
-  .setting {
-    height: 18px;
-    width: 18px;
-    background: url() center / 18px no-repeat;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 18"><path fill="#4A4A4A" fill-rule="nonzero" d="M18 11.475v.5625c0 .225-.1115.45-.223.675-.1115.225-.223.45-.3345.5625-.1115.225-.223.3375-.446.3375-.1114.1125-.3344.1125-.446.1125-.1114 0-.2229 0-.3344-.1125-.1115 0-.3345-.1125-.446-.1125h-.5574c-.223 0-.446.1125-.5575.1125-.223.1125-.3345.225-.5575.3375-.3345.3375-.446.675-.5574 1.125 0 .45 0 .7875.223 1.125.1114.225.1114.5625-.1115.7875l-.3345.3375c-.1115.1125-.3345.225-.5575.3375-.223.1125-.446.1125-.669.225-.223 0-.446.1125-.5574.1125-.1115 0-.223 0-.3345-.1125-.1115-.1125-.223-.225-.223-.3375-.1115-.45-.3345-.7875-.669-1.0125-.3344-.3375-.7804-.45-1.2264-.45-.446 0-.7804.1125-1.2264.45-.3345.3375-.5575.675-.7805 1.0125-.1115.1125-.1115.225-.3344.3375 0 .1125-.1115.1125-.3345.1125-.223 0-.3345 0-.5575-.1125-.223-.1125-.446-.1125-.669-.225-.223-.1125-.446-.225-.5574-.3375-.223-.1125-.3345-.225-.446-.3375-.1115-.1125-.1115-.225-.1115-.3375 0-.1125 0-.3375.1115-.5625.1115-.3375.223-.675.1115-1.0125 0-.3375-.223-.7875-.446-1.0125-.223-.225-.446-.3375-.669-.3375-.223-.1125-.4459-.1125-.7804-.1125-.223 0-.5575.1125-.7804.1125H1.053c-.1115 0-.223-.225-.446-.3375l-.3345-.675c-.1115-.225-.223-.45-.223-.675 0-.225-.1114-.45 0-.5625 0-.3375.1115-.45.3345-.5625.5575-.1125.892-.45 1.2265-.7875.3344-.3375.446-.7875.446-1.125 0-.45-.1116-.9-.446-1.125C1.276 7.425.9415 7.2.607 7.0875L.2725 6.75C.161 6.6375.161 6.4125.161 6.3c0-.1125 0-.3375.1115-.5625 0-.225.1115-.45.223-.5625.1115-.225.223-.3375.3345-.5625 0-.1125.1115-.225.223-.3375.1115-.1125.223-.1125.3345-.1125.1115 0 .223 0 .3345.1125.3344.1125.7804.225 1.1149.1125.446-.1125.7804-.225 1.115-.5625.1114-.1125.223-.3375.3344-.5625.1115-.225.1115-.45.1115-.675V2.025v-.3375c0-.1125 0-.1125-.1115-.225v-.225c.1115-.3375.3345-.45.446-.675l.669-.3375c.223-.1125.446-.1125.6689-.225h.5575c.1115 0 .223 0 .3344.1125.1115.1125.1115.225.223.3375.1115.45.3345.675.669 1.0125.3345.225.669.45 1.115.45.4459 0 .8919-.1125 1.2264-.3375.3344-.225.5574-.5625.7804-1.0125 0-.1125.1115-.225.223-.3375.1115-.225.223-.225.3345-.225.223 0 .3345 0 .5574.1125.223 0 .446.1125.669.225.223.1125.446.225.5575.3375.1115.1125.223.225.3345.45.1114.1125.1114.225.1114.3375 0 .1125 0 .225-.1114.225-.1115.3375-.223.7875-.1115 1.125.1115.45.223.7875.5574 1.125.3345.3375.669.45 1.115.5625.446 0 .892 0 1.2264-.225.1115-.1125.223-.1125.3345-.1125.1115 0 .223.1125.3345.225.223.225.3344.45.5574.7875.1115.3375.223.7875.3345 1.125 0 .225 0 .3375-.1115.5625-.1115.1125-.223.225-.3345.225-.446.1125-.7804.3375-1.0034.7875-.3345.3375-.446.7875-.446 1.2375 0 .45.1115.7875.3345 1.125.223.3375.5575.5625.892.675.1114 0 .1114.1125.223.1125.223.1125.3344.225.4459.45zm-8.9195 1.6875c.5575 0 1.115-.1125 1.6724-.3375.5575-.225 1.0035-.5625 1.338-.9.3344-.3375.669-.7875.8919-1.35.1115-.45.223-1.0125.223-1.575s-.1115-1.125-.3345-1.6875c-.223-.5625-.5575-.9-.892-1.35-.3344-.3375-.7804-.675-1.3379-.9-.446-.225-1.0034-.3375-1.5609-.3375-.5574 0-1.115.1125-1.6724.3375-.446.225-.892.5625-1.3379.9-.3345.45-.669.9-.892 1.35-.1114.5625-.223 1.125-.223 1.6875s.1116 1.125.3345 1.6875c.223.5625.5575 1.0125.892 1.35.3345.3375.7804.675 1.338.9.4459.1125 1.0034.225 1.5608.225z"/></svg>');
+  margin-top: 30px;
+  margin-bottom: 15px;
+  margin-right: 38px;
+  border-radius: 0 8px 50px 0;
+  background-color: rgba(255,255,255,.95);
+  box-shadow: 0px 1px 15px 0px rgba(68,90,107,.2);
+  :before {
+    position: absolute;
+    content: '';
+    top: -30px;
+    left: 0;
+    right: -18px;
+    height: 80%;
+    border-bottom-right-radius: 50px;
+    background: linear-gradient(18deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
+    z-index: -1;
   }
-  .user-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    font-size: 14px;
-    font-weight: 600;
-    .avatar {
-      height: 60px;
-      width: 60px;
-      border-radius: 999px;
-      overflow: hidden;
-      margin-bottom: 5px;
-      background-color: #eee;
-    }
-    .name {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: center;
-    }
-    .icon.qrcode {
-      margin-left: 5px;
-      width: 14px;
-      height: 14px;
-      background: url() center / 100% no-repeat;
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="29.938" height="29.938"><path d="M7.129 15.683h1.427v1.427h1.426v1.426H2.853V17.11h1.426v-2.853h2.853v1.426h-.003zm18.535 12.83h1.424v-1.426h-1.424v1.426zM8.555 15.683h1.426v-1.426H8.555v1.426zm19.957 12.83h1.427v-1.426h-1.427v1.426zm-17.104 1.425h2.85v-1.426h-2.85v1.426zm12.829 0v-1.426H22.81v1.426h1.427zm-5.702 0h1.426v-2.852h-1.426v2.852zM7.129 11.406v1.426h4.277v-1.426H7.129zm-1.424 1.425v-1.426H2.852v2.852h1.426v-1.426h1.427zm4.276-2.852H.002V.001h9.979v9.978zM8.555 1.427H1.426v7.127h7.129V1.427zm-5.703 25.66h4.276V22.81H2.852v4.277zm14.256-1.427v1.427h1.428V25.66h-1.428zM7.129 2.853H2.853v4.275h4.276V2.853zM29.938.001V9.98h-9.979V.001h9.979zm-1.426 1.426h-7.127v7.127h7.127V1.427zM0 19.957h9.98v9.979H0v-9.979zm1.427 8.556h7.129v-7.129H1.427v7.129zm0-17.107H0v7.129h1.427v-7.129zm18.532 7.127v1.424h1.426v-1.424h-1.426zm-4.277 5.703V22.81h-1.425v1.427h-2.85v2.853h2.85v1.426h1.425v-2.853h1.427v-1.426h-1.427v-.001zM11.408 5.704h2.85V4.276h-2.85v1.428zm11.403 11.405h2.854v1.426h1.425v-4.276h-1.425v-2.853h-1.428v4.277h-4.274v1.427h1.426v1.426h1.426V17.11h-.004zm1.426 4.275H22.81v-1.427h-1.426v2.853h-4.276v1.427h2.854v2.853h1.426v1.426h1.426v-2.853h5.701v-1.426h-4.276v-2.853h-.002zm0 0h1.428v-2.851h-1.428v2.851zm-11.405 0v-1.427h1.424v-1.424h1.425v-1.426h1.427v-2.853h4.276v-2.853h-1.426v1.426h-1.426V7.125h-1.426V4.272h1.426V0h-1.426v2.852H15.68V0h-4.276v2.852h1.426V1.426h1.424v2.85h1.426v4.277h1.426v1.426H15.68v2.852h-1.426V9.979H12.83V8.554h-1.426v2.852h1.426v1.426h-1.426v4.278h1.426v-2.853h1.424v2.853H12.83v1.426h-1.426v4.274h2.85v-1.426h-1.422zm15.68 1.426v-1.426h-2.85v1.426h2.85zM27.086 2.853h-4.275v4.275h4.275V2.853zM15.682 21.384h2.854v-1.427h-1.428v-1.424h-1.427v2.851zm2.853-2.851v-1.426h-1.428v1.426h1.428zm8.551-5.702h2.853v-1.426h-2.853v1.426zm1.426 11.405h1.427V22.81h-1.427v1.426zm0-8.553h1.427v-1.426h-1.427v1.426zm-12.83-7.129h-1.425V9.98h1.425V8.554z"/></svg>');
-    }
-  }
-  .my-list {
+  .user {
     display: flex;
     flex-direction: row;
+    align-items: center;
+    .avatar {
+      margin: 15px;
+      border: 2px solid #fffefe;
+      border-radius: 999px;
+      height: 42px;
+      width: 42px;
+      background-color: #94D5C1;
+    }
+    .name {
+      font-size: 17px;
+      font-weight: 500;
+    }
+  }
+  .module-list {
+    margin-top: 10px;
+    padding: 20px 0;
+    display: flex;
     .item {
       flex: 1;
-      padding: 25px 0;
       display: flex;
       flex-direction: column;
       align-items: center;
+      font-size: 12px;
+      color: #666;
       .icon {
-        height: 23px;
-        width: 23px;
-        background: url() center center / 23px 23px no-repeat;
+        margin-bottom: 6px;
+        height: 30px;
+        width: 30px;
+        background-size: 30px 30px;
+        background-position: center;
+        background-repeat: no-repeat;
         &.wallet {
-          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><g fill="#D0021B" fill-rule="nonzero"><path d="M18 20H2c-1.104-.0013-1.9987-.9002-2-2.0096V7.2727c.0013-1.1093.896-2.0083 2-2.0095h16c1.104.0012 1.9987.9002 2 2.0095v10.7177c-.0013 1.1094-.896 2.0083-2 2.0096zM2 6.6029c-.368.0004-.6663.3-.6667.6698v10.7177c.0004.3698.2987.6695.6667.6699h16c.368-.0004.6663-.3.6667-.6699V7.2727c-.0004-.3698-.2987-.6694-.6667-.6698H2z"/><path d="M19.3356 16.8421h-4.6504c-1.1002-.0013-1.9918-.9226-1.993-2.0596v-4.1192c.0012-1.137.8928-2.0583 1.993-2.0596h4.6504c.367 0 .6644.3074.6644.6866v6.8653c0 .3791-.2974.6865-.6644.6865zm-4.6504-6.8653c-.3668.0004-.664.3075-.6644.6865v4.1192c.0004.379.2976.6861.6644.6865h3.9861V9.9768h-3.9861zM3.8216 6.5446c-.2373-.0003-.4563-.1313-.5748-.3436a.7066.7066 0 0 1 0-.6863l1.918-3.4328c.5511-.984 1.769-1.3212 2.7225-.7539l1.1507.6866c.4404.2618.767.6882.9123 1.1913.1055.3631-.0939.746-.4453.855-.3514.109-.7218-.0971-.8273-.4603a.6802.6802 0 0 0-.304-.3969l-1.1508-.6865c-.3178-.1891-.7237-.0767-.9075.2512L4.3975 6.2012c-.1187.2127-.3383.3437-.576.3434z"/><path d="M14.5957 6.313c-.2719 0-.517-.1538-.621-.3896-.104-.236-.0465-.5075.1457-.688l1.1814-1.1096c.2621-.2467.2621-.646 0-.8928l-1.9012-1.7855c-.126-.1184-.297-.185-.4753-.185-.1783 0-.3492.0666-.4753.185L7.4662 6.1282c-.1695.161-.4178.2246-.6509.1664-.233-.0582-.415-.2291-.477-.448-.0619-.2188.0057-.452.1773-.6112L11.4994.5547c.7875-.7396 2.0643-.7396 2.8518 0l1.9012 1.7856c.7863.74.7863 1.9382 0 2.6783L15.071 6.1282c-.126.1185-.297.185-.4753.1849zM15.7895 12.6316c0 .5813.4713 1.0526 1.0526 1.0526.5814 0 1.0526-.4713 1.0526-1.0526 0-.5814-.4712-1.0527-1.0526-1.0527-.5813 0-1.0526.4713-1.0526 1.0527z"/></g></svg>');
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient x1='0%25' y1='23.268%25' x2='197.826%25' y2='0%25' id='prefix__a'%3E%3Cstop stop-color='%2328BFB7' offset='0%25'/%3E%3Cstop stop-color='%2326D0A8' offset='100%25'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cg transform='translate(1 2)' fill='url(%23prefix__a)' fill-rule='evenodd'%3E%3Cpath d='M2.5 7v15a1 1 0 001 1H24a1 1 0 001-1V8a1 1 0 00-1-1H2.5zm-2-2H24a3 3 0 013 3v14a3 3 0 01-3 3H3.5a3 3 0 01-3-3V5z'/%3E%3Cpath d='M25 12h-4.096a3.236 3.236 0 100 6.472H25V12zm-4.096-2H27v10.472h-6.096a5.236 5.236 0 110-10.472z'/%3E%3Ccircle cx='20.75' cy='14.95' r='1.25'/%3E%3Cpath d='M2.5 4.804a1 1 0 01-.8.98l.8-.163v-.817zm0 .817l14.392-2.929c1.138-.231 1.613.074 1.757.78a1 1 0 01.02.2v2.704l2 .004V3.672a3 3 0 00-.06-.598C20.279 1.45 18.884.246 16.494.732L1.3 3.824a1 1 0 00-.801.98v1.54l2 .003V5.62zm0-.817a1 1 0 01-.8.98l.8-.163v-.817zm0 .817l14.392-2.929c1.138-.231 1.613.074 1.757.78a1 1 0 01.02.2v2.704l2 .004V3.672a3 3 0 00-.06-.598C20.279 1.45 18.884.246 16.494.732L1.3 3.824a1 1 0 00-.801.98v1.54l2 .003V5.62z'/%3E%3C/g%3E%3C/svg%3E");
         }
         &.order {
-          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 23 16"><g fill="#D0021B" fill-rule="nonzero"><path d="M19.8375 16H2.3C1.0063 16 0 14.7925 0 13.283V2.717C0 1.2075 1.0063 0 2.3 0h17.5375C21.5625 0 23 1.6604 23 3.7736V5.434l-.4312.4528c-1.0063 0-1.725.9057-1.725 2.1132s.7187 1.9623 1.725 2.1132L23 10.566v1.6604C23 14.3396 21.5625 16 19.8375 16zM2.3.9057c-.8625 0-1.4375.7547-1.4375 1.8113v10.717c0 .9056.7188 1.8113 1.4375 1.8113h17.5375c1.2938 0 2.4438-1.2076 2.4438-2.868V10.868C20.9874 10.566 20.125 9.5094 20.125 8s.8625-2.566 2.1563-2.868V3.7737c0-1.5094-1.15-2.868-2.4438-2.868H2.3z"/><path d="M6.44 2.8c-.2933 0-.44-.1444-.44-.4333V1.5c0-.2889.1467-.4333.44-.4333s.44.1444.44.4333v.8667c0 .2889-.1467.4333-.44.4333zm0 9.8222c-.2933 0-.44-.1444-.44-.4333V10.311c0-.2889.1467-.4333.44-.4333s.44.1444.44.4333v1.7333c0 .289-.1467.5778-.44.5778zm0-3.3222c-.2933 0-.44-.1444-.44-.4333V7.1333c0-.2889.1467-.4333.44-.4333s.44.1444.44.4333v1.7334c0 .2889-.1467.4333-.44.4333zm0-3.1778c-.2933 0-.44-.1444-.44-.4333V3.811c0-.2889.1467-.4333.44-.4333s.44.2889.44.4333v1.7333c0 .289-.1467.5778-.44.5778zm0 8.8111c-.2933 0-.44-.1444-.44-.4333v-.8667c0-.2889.1467-.4333.44-.4333s.44.1444.44.4333V14.5c0 .2889-.1467.4333-.44.4333zM14.6533 9.3H16.56c.2933 0 .44.1444.44.4333 0 .289-.1467.4334-.44.4334h-1.9067v1.5889c0 .1444 0 .2888-.1466.4333 0 0-.1467.1444-.2934.1444-.1466 0-.2933 0-.2933-.1444 0 0-.1467-.1445-.1467-.4333v-1.7334h-1.9066c-.2934 0-.44 0-.44-.2889s.1466-.4333.44-.4333h1.9066V8.2889h-1.9066c-.2934 0-.44-.1445-.44-.4333 0-.289.1466-.4334.2933-.4334h1.4667c-.1467-.4333-.44-.8666-.7334-1.3l-.88-1.3c-.1466-.2889-.1466-.4333.1467-.5778.1467 0 .1467-.1444.2933-.1444.1467 0 .1467.1444.2934.2889l1.9066 3.1778h.2934c.2933-.5778.5866-1.0111.88-1.589.2933-.5777.5866-1.011.88-1.5888.1466-.1445.1466-.2889.2933-.2889s.1467 0 .2933.1444c.1467 0 .1467.1445.1467.289 0 .1444 0 .1444-.1467.2888L15.24 7.5667h1.32c.2933 0 .44.1444.44.4333 0 .2889-.1467.4333-.44.4333h-1.9067V9.3z"/></g></svg>');
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient x1='0%25' y1='23.268%25' x2='197.826%25' y2='0%25' id='prefix__a'%3E%3Cstop stop-color='%2328BFB7' offset='0%25'/%3E%3Cstop stop-color='%2326D0A8' offset='100%25'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M17.604 6.25h-5.208a1.25 1.25 0 01-2.292 0H6a.75.75 0 00-.75.75v18.5c0 .414.336.75.75.75h17.5a.75.75 0 00.75-.75V7a.75.75 0 00-.75-.75h-3.604a1.25 1.25 0 01-2.292 0zM20 3.75h3.5A3.25 3.25 0 0126.75 7v18.5a3.25 3.25 0 01-3.25 3.25H6a3.25 3.25 0 01-3.25-3.25V7A3.25 3.25 0 016 3.75h4v-1a1.25 1.25 0 012.5 0v1h5v-1a1.25 1.25 0 012.5 0v1zM8.25 10.5h12.5a1.25 1.25 0 010 2.5H8.25a1.25 1.25 0 010-2.5zm0 4.5h9.5a1.25 1.25 0 010 2.5h-9.5a1.25 1.25 0 010-2.5zm0 4h6.5a1.25 1.25 0 010 2.5h-6.5a1.25 1.25 0 010-2.5z' fill='url(%23prefix__a)' fill-rule='evenodd'/%3E%3C/svg%3E");
         }
         &.favor {
-          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 17 18"><path fill="#F5A623" fill-rule="nonzero" d="M1.1253 16.8739l7.0019-2.9406 7.0019 2.9406V1.1249H1.1253v15.749zM0 1.1249C0 .5036.5038 0 1.1253 0h14.0038c.6215 0 1.1253.5036 1.1253 1.125v15.7489c0 .8041-.8195 1.3486-1.5611 1.0371l-7.002-2.9405h.8718L1.561 17.911C.8196 18.2225 0 17.678 0 16.874V1.1249zm8.1272 9.6541l2.1963.9997c.448.204.7538-.024.6918-.5051l-.2986-2.317 1.6607-1.7177c.3298-.3411.2247-.7003-.2481-.7884l-2.4022-.4479L8.556 3.9448c-.2326-.4087-.6244-.4099-.8657.0139L6.5284 5.9992l-2.4021.4487c-.4695.0877-.584.4415-.2484.7888l1.6598 1.7177-.2986 2.317c-.0618.4801.2478.7075.6918.5057l2.1963-.998zm.4657 1.0241l-2.1963.998c-1.2443.5655-2.4485-.316-2.2735-1.6735l.2985-2.3169.3067.9253-1.6598-1.7178c-.957-.9903-.5017-2.4234.851-2.676l2.4023-.4488-.7713.5493 1.1619-2.0405c.6682-1.1736 2.153-1.1886 2.8216-.0137l1.1712 2.0578-.7717-.5496 2.4021.448c1.3582.2531 1.8013 1.693.851 2.676l-1.6607 1.7177.307-.9254.2985 2.3168c.175 1.3585-1.0257 2.241-2.2742 1.6727l-2.1963-.9997.932.0003z"/></svg>');
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient x1='0%25' y1='23.268%25' x2='197.826%25' y2='0%25' id='prefix__a'%3E%3Cstop stop-color='%2328BFB7' offset='0%25'/%3E%3Cstop stop-color='%2326D0A8' offset='100%25'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M15.059 25.042l-5.326 2.904a3 3 0 01-4.385-3.186l1.116-5.962-4.408-4.168a3 3 0 011.675-5.155l6.016-.78 2.602-5.48a3 3 0 015.42 0l2.601 5.48 6.016.78a3 3 0 011.675 5.155l-4.408 4.168 1.117 5.962a3 3 0 01-4.386 3.186l-5.325-2.904zm0-2.931l5.498 2.998a1 1 0 001.461-1.062l-1.152-6.155 4.55-4.302a1 1 0 00-.558-1.719l-6.21-.806-2.686-5.657a1 1 0 00-1.807 0l-2.685 5.657-6.21.806A1 1 0 004.7 13.59l4.55 4.302L8.1 24.047a1 1 0 001.462 1.062l5.498-2.998z' fill='url(%23prefix__a)' fill-rule='evenodd'/%3E%3C/svg%3E");
         }
-      }
-      .name {
-        margin-top: 5px;
-        font-size: 12px;
-      }
-      .note {
-        margin-top: 10px;
-        font-size: 12px;
-        color: #4a4a4a;
+        &.coupon {
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient x1='0%25' y1='23.268%25' x2='197.826%25' y2='0%25' id='prefix__a'%3E%3Cstop stop-color='%2328BFB7' offset='0%25'/%3E%3Cstop stop-color='%2326D0A8' offset='100%25'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M25.25 19c0-1.206.575-2.306 1.5-3v-1a3.748 3.748 0 010-6V5.5c0-.69-.56-1.25-1.25-1.25h-21c-.69 0-1.25.56-1.25 1.25V9a3.748 3.748 0 010 6v1a3.748 3.748 0 010 6v2.5c0 .69.56 1.25 1.25 1.25h21c.69 0 1.25-.56 1.25-1.25V22a3.748 3.748 0 01-1.5-3zm4 5.5a3.75 3.75 0 01-3.75 3.75h-21A3.75 3.75 0 01.75 24.5v-4.026l.75-.327a1.25 1.25 0 000-2.294l-.75-.327v-4.052l.75-.327a1.25 1.25 0 000-2.294l-.75-.327V5.5A3.75 3.75 0 014.5 1.75h21a3.75 3.75 0 013.75 3.75v5.026l-.75.327a1.25 1.25 0 000 2.294l.75.327v4.052l-.75.327a1.25 1.25 0 000 2.294l.75.327V24.5zM20.023 8.46l1.768 1.767-11.314 11.314-1.768-1.768L20.023 8.459zM11.6 13.8a1.8 1.8 0 110-3.6 1.8 1.8 0 010 3.6zm7 6a1.8 1.8 0 110-3.6 1.8 1.8 0 010 3.6z' fill='url(%23prefix__a)' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
       }
     }
   }
 }
-.order-list {
-  padding-bottom: 80px;
-  .empty {
-    padding: 5px;
-    font-size: 12px;
-    color: #4a4a4a;
-    text-align: center;
+.current-activity {
+  margin-top: 15px;
+  margin-right: 38px;
+  border-radius: 0 999px 999px 0;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: linear-gradient(18deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
+  color: #fff;
+  .time-wrapper {
+    border-right: 1px solid #32E1CF;
+    padding: 0 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    .title {
+      font-size: 11px;
+    }
+    .time {
+      font-size: 20px;
+      font-weight: 600;
+    }
   }
-  .card {
-    margin-bottom: 2px;
-    background-color: #fff;
+  .activity {
+    flex: 1;
+    min-width: 0;
+    padding: 0 20px 0 15px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+.calendar {
+  margin-bottom: 20px;
+  .title-line {
+    padding: 15px;
     display: flex;
     flex-direction: row;
-    &.placeholder > svg {
-      height: 110px;
+    justify-content: space-between;
+    align-items: center;
+    .title {
+      font-size: 15px;
+      font-weight: 500;
     }
-    .thumbnail {
-      height: 80px;
-      width: 80px;
-      border-radius: 5px;
-      margin: 15px 25px;
-      object-fit: cover;
-      background-color: #eee;
+    .weekday {
+      font-size: 12px;
+      color: #666;
     }
-    .summary {
+  }
+  .date-list {
+    padding: 9px 15px;
+    display: flex;
+    flex-direction: row;
+    .item {
       flex: 1;
-      margin: 15px;
+      border-radius: 2px;
+      min-width: 0;
+      height: 102px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+      &.selected {
+        background-color: #30D6BA;
+        color: #fff;
+        .weekday {
+          color: #fff;
+        }
+        .badge {
+          background-color: #fff;
+          color: #1CAF9F;
+        }
+      }
+      .weekday {
+        margin-top: 11px;
+        font-size: 15px;
+        color: #999;
+      }
+      .day {
+        margin-top: 16px;
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .badge {
+        margin-top: 8px;
+        border-radius: 999px;
+        height: 16px;
+        width: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 10px;
+        background-color: #30D6BA;
+        color: #fff;
+      }
+    }
+  }
+  .course-list {
+    margin-top: 5px;
+    padding: 0 15px;
+    .item {
+      position: relative;
+      border-radius: 4px;
+      height: 112px;
+      padding: 15px;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      .title {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        font-weight: 600;
-        .store {
-          font-size: 14px;
-          font-weight: normal;
+      background-color: #ECEFF2;
+      overflow: hidden;
+      & + .item {
+        margin-top: 15px;
+      }
+      &.near, &.ongoing {
+        background: linear-gradient(90deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
+        color: #fff;
+        .note {
+          color: #fff;
         }
-        .status {
-          font-size: 12px;
-          color: #9b9b9b;
+        .hint {
+          color: #fff;
         }
       }
       .time {
-        font-size: 12px;
-        color: #4a4a4a;
+        font-size: 17px;
+        font-weight: 800;
       }
-      .info {
-        font-size: 12px;
-        color: #4a4a4a;
+      .name {
+        font-size: 15px;
       }
+      .note {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #666;
+      }
+      .hint {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        font-size: 12px;
+        color: #999;
+      }
+    }
+  }
+}
+.tip {
+  position: absolute;
+  bottom: calc(90px + env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  font-size: 11px;
+  color: #999;
+  .contact {
+    margin: unset;
+    margin-left: 15px;
+    -webkit-appearance: none;
+    outline: unset;
+    border: unset;
+    border-radius: unset;
+    padding: unset;
+    padding-left: 19px;
+    line-height: unset;
+    font-size: 11px;
+    background-color: unset;
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAAnCAQAAAAxiAl3AAAAAXNSR0IArs4c6QAAAERlWElmTU0AKgAAAAgAAYdpAAQAAAABAAAAGgAAAAAAA6ABAAMAAAABAAEAAKACAAQAAAABAAAALaADAAQAAAABAAAAJwAAAAAMGB3xAAAFD0lEQVRIx81XaWxUVRR+lJZV4kZQcKFhEaapQoghmmAElEAMAUSIrCKElB+mLokaDf6YGBJFhEo78+757n1vBho0ocEYNYQYWYz9QQISkAKRIFsrNaBdoNNlOgzX897Me9PpCpVE703mzZt773fP+c46hvHfjuAge4woFNPpWTGdn49UDLoLoLhXzBfb5QGcolrZgCY0opZO46AspYXm/f2HfZw+pBNojuhdeqe2NJKUQNLi77t0VKOFquij0Nj+SLsBJy2GsDWqcZAkPkCReB1F/CQ6QNU2r/F1p803Su67A2BRSPuVjmjcVPvkOkyODslejw4xJ9FauRftEYanQ+GptwlMc3DGlfYYLd4yvBfNhpkLcMTWOzTOifm3I/F8ecXWshnb7TGd/CS3YlAwN/s39ZDcKmMsxlUs6gM4PAPXolrWiZXGgA7mXC42Yw8zXomD+Bqf0SpzXAdhluEvNuvfYmYvwKGxOMqbGsXq1Pu2oeaL0kKtjEsmKOJO1kjLOF0V5TQPw9LgK1HP506Uju8pMHIBPpgQ76Q5LxBRtFgOlEbWdH5h72iTu2hKaq8slu22pijyujffErRFtKCKgc6bWYSaSBfQ7AvYh2qp2KEumIMyfms3V3RrbzpUruUFsFJLB2KjjFu9wHqTdWrHJse45jj8Xq6p0h7RVeYXVMxO4hPD0APoNdWibgPYmUqruNgQzGHhNkVuqmY5t7PMeVS6U+OSY3k1Wzao9DFLqx4hrTRdSssb9JLjBHRhpyZ0Sl5iFP3G3mkbxpbhqLTSXKIOP+Gs7JZnnKGfcUOmaaGjTriD2JTnS0Zn0zEPCXmLlvC3VbJduodVzFwbzAkHqMrqwjCOh55AHt729iKBIhbwZZlEMisyxTpcZsWbw4FDufjBdo/z51kxyl2VqgsZosxdyac/U9dGOJOUDsaTiPPey2JdGthc6oQq3xzDeGsCLlvp42gx14Qe5O0nVRep6TgVYCS9haRPSa0KhAOIO0LJmHiFgbl+/GqllIqV5KuZaFU+n1RPe3FKdsM0r1VhH5qkrwclaA5NdKBThGG0Id5XnmFiobHmUtUhTJSbr2W30wl81eEy3rea+W/zr3rXoGrf5k0i31xlZUH3NTOa2Npcb07yoHleMtCAjlIv8jKGy/1Gc4W5pse5Apso4e1mOV9lqeMeNNUbFM4QwlI/h2YvXKiJCvooczMo6YdNXMzOQDNGmRGeioa0b8ZoIqfV83bGVAv7gF5vZzy9OjyBvSaeBq5TTxkVA8XGdOKMqUAwR+62ffYo7OQGo+ckvMfy9+LbYC5NcaAdG5jvufkzfI8olwknJYpCN6JaPf7kFWtCL6VuOq77zhgHp1NMc726lULbhvoVGuuxH2fMSYZRPJi+i/gegh2dq7k37BH0fQeZf3QqTmkBjtBXtLCTrsgLPxZ0c5ZVKM96CUol5BfBbtowTmLllh+J8iKmpSjaPKKP4ssueN32PPumFNk9EleUyfjSuiXTEstmsewOmhwuX/W277HcZ3yMGZhsjlMBzKItqPFiloEbzeI7bM3Cs+hwJtnzNW2okefwh9MxyUxw/yLm9qOdVI/KrbjmAKh0Dbd1yk2Vm1moHiGR3+9ulabQp3QMddyj+sHBBDVyZvucnv7XPfa2B+TzqLRdCiwtDtNy9QxG3qX/BHgTrU7fpNpod0m+cfeGWkwXZQ2q6Bus6aE76u+IPhwOqEDZGOP/M/4BPrIMZ3Kx9mAAAAAASUVORK5CYII=');
+    background-size: 15px 15px;
+    background-position: left center;
+    background-repeat: no-repeat;
+    color: #999;
+    &:before, &:after {
+      content: unset;
     }
   }
 }

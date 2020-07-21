@@ -55,13 +55,13 @@ export default {
       return post('/userFav/delete', { gymCode })
     }
   },
-  getFavorGyms() {
+  favorGyms() {
     return get('/gyms/favor')
   },
-  getMyTrack(gmtTimeStart, gmtTimeEnd) {
+  calendar(gmtTimeStart, gmtTimeEnd) {
     return get('/userTrack/myTrack', { gmtTimeStart, gmtTimeEnd })
   },
-  getMyOrders() {
+  myOrders() {
     return get('/userOrder/myOrders', { pageIndex: 1, pageSize: 99 })
   },
   preEntranceCheck(gymCode) {
@@ -84,6 +84,9 @@ export default {
   },
   getUserInfo() {
     return get('/user/userInfo')
+  },
+  currentActivity() {
+    return get('/userTrack/currentTrack', { gymCode: 'GYM00001' })
   }
 }
 

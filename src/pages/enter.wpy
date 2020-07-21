@@ -26,6 +26,7 @@
       <button
         class="block-button primary"
         open-type="getUserInfo"
+        lang="zh_CN"
         @getuserinfo="onGetUserInfo"
       >
         确认

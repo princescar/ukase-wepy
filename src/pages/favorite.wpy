@@ -41,7 +41,7 @@ export default class extends wepy.page {
   }
 
   async loadGyms() {
-    this.gyms = await API.getFavorGyms()
+    this.gyms = await API.favorGyms()
   }
 
   onLoad() {
