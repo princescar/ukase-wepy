@@ -2,8 +2,28 @@
   <view class="container">
     <view class="header">
       <view class="user">
-        <view class="avatar"></view>
-        <view class="name">张三</view>
+        <view
+          wx:if="{{user.headImage}}"
+          class="avatar"
+          style="background-image: url('{{user.headImage}}')"
+        />
+        <open-data
+          wx:else
+          class="avatar"
+          type="userAvatarUrl"
+        />
+        <view
+          wx:if="{{user.nickName}}"
+          class="name"
+        >
+          {{user.nickName}}
+        </view>
+        <open-data
+          wx:else
+          class="name"
+          type="userNickName"
+          lang="zh_CN"
+        />
       </view>
       <view class="module-list">
         <view class="item" @tap="go('wallet')">
@@ -83,6 +103,7 @@ import wepy from 'wepy'
 import dayjs from 'dayjs'
 import humanizeDuration from 'humanize-duration'
 import API from '../api'
+import Runtime from '../services/runtime'
 
 export default class extends wepy.page {
   config = {
@@ -94,7 +115,8 @@ export default class extends wepy.page {
     today: '',
     dates: [],
     selectedDate: null,
-    eventMap: {}
+    eventMap: {},
+    user: null
   }
 
   methods = {
@@ -139,6 +161,8 @@ export default class extends wepy.page {
   }
 
   async loadCalendar() {
+    const eventMap = {}
+
     const startDate = this.dates[0].date
     const endDate = this.dates[this.dates.length - 1].date
     const events = await API.calendar(startDate, endDate)
@@ -172,12 +196,14 @@ export default class extends wepy.page {
         x.status = 'past'
       }
 
-      if (!this.eventMap[date]) {
-        this.eventMap[date] = []
+      if (!eventMap[date]) {
+        eventMap[date] = []
       }
-      this.eventMap[date].push(x)
+      eventMap[date].push(x)
     })
-    console.log(this.eventMap)
+    console.log(eventMap)
+
+    this.eventMap = eventMap
     this.$apply()
   }
 
@@ -190,6 +216,7 @@ export default class extends wepy.page {
   }
 
   onLoad() {
+    this.user = Runtime.userInfo
     this.initDates()
   }
 }
@@ -232,6 +259,10 @@ export default class extends wepy.page {
       height: 42px;
       width: 42px;
       background-color: #94D5C1;
+      background-size: 42px 42px;
+      background-position: center center;
+      background-repeat: no-repeat;
+      overflow: hidden;
     }
     .name {
       font-size: 17px;
