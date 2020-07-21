@@ -13,7 +13,6 @@
   "dependencies": {
     "dayjs": "^1.8.27",
     "humanize-duration": "^3.23.0",
-    "lodash": "^4.17.15",
     "querystring": "^0.2.0",
     "wepy": "^1.6.0",
     "wepy-async-function": "^1.4.4"
