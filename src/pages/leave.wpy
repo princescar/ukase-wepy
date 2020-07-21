@@ -87,9 +87,8 @@ export default class extends wepy.page {
     this.charge.outTimeString = dayjs(outTime).format('YYYY-MM-DD HH:mm')
     this.charge.duration = humanizeDuration(dayjs(outTime) - dayjs(inTime), {
       language: 'zh_CN',
-      units: ['h', 'm'],
+      units: ['m'],
       maxDecimalPoints: 0,
-      spacer: '',
       delimiter: ''
     })
     this.charge.detail = JSON.parse(this.charge.chargeDetail)
