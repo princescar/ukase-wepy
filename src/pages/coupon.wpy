@@ -1,0 +1,31 @@
+<template>
+  <view class="container">
+    <view class="buttons">
+      <button class="block-button accent" @tap="exchange">
+        兑换
+      </button>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+
+export default class extends wepy.page {
+  config = {
+    navigationBarTitleText: '优惠券'
+  }
+
+  methods = {
+    exchange() {
+      wx.showToast({ title: '该功能暂未开放', icon: 'none' })
+    }
+  }
+}
+</script>
+
+<style lang="scss">
+.buttons {
+  padding: 42px 48px;
+}
+</style>

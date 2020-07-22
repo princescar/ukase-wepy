@@ -18,7 +18,9 @@ export default class extends wepy.app {
       'pages/leave',
       'pages/wallet',
       'pages/flow',
-      'pages/orders'
+      'pages/orders',
+      'pages/coupon',
+      'pages/agreement'
     ],
     tabBar: {
       custom: true,
