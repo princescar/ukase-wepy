@@ -41,7 +41,9 @@ Component({
       wx.scanCode({
         scanType: 'qrCode',
         success(res) {
-          Scan.handle(res.result)
+          Scan.handle(res.result).catch(function(e) {
+            wx.showModal({ title: '错误', content: e.message, showCancel: false })
+          })
         }
       })
     }

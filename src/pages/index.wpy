@@ -22,15 +22,25 @@ export default class extends wepy.page {
     wepy.setStorageSync('token', token)
     Runtime.userInfo = await API.getUserInfo()
 
+    let go = true
     if (q) {
       const url = decodeURIComponent(q)
-      if (Scan.handle(url, true)) {
+      try {
+        await Scan.handle(url, true)
         return
+      } catch (e) {
+        await wx.showModal({
+          title: '错误',
+          content: e.message,
+          showCancel: false
+        })
       }
     }
 
-    const next = r || '/pages/tab-gyms'
-    wepy.reLaunch({ url: next })
+    if (go) {
+      const next = r || '/pages/tab-gyms'
+      wepy.reLaunch({ url: next })
+    }
   }
 }
 </script>

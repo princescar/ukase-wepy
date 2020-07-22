@@ -15,7 +15,7 @@ export default {
     try {
       await wepy.checkSession()
     } catch (e) {
-      console.log('refresh session', value)
+      console.log('refresh session')
       const { code } = await wepy.login()
       const token = await API.login(code)
       wepy.setStorageSync('token', token)
