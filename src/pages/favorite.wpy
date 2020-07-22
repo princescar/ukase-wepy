@@ -1,15 +1,23 @@
 <template>
-  <view class="container fixed-header">
-    <header title="我的收藏">
-      <view slot="children">
-        <tabs @change.user="tabChange" />
+  <view class="container">
+    <view class="header">我的收藏</view>
+    <view class="gym-list">
+      <view class="item" wx:for="{{gyms}}" wx:key="id" @tap="detail({{item}})">
+        <image src="{{item.thumbnail}}" mode="aspectFill" />
+        <view class="summary">
+          <view class="title-line">
+            <view class="title">{{item.name}}</view>
+            <view class="location" wx:if="{{hasUserLocation}}">
+              {{distance.format(item.distance)}}
+            </view>
+          </view>
+          <view class="rating star-{{item.rating}}"/>
+          <view class="note">【{{item.district}}】{{item.category}}</view>
+          <view class="price" wx:if="{{item.leastAmount}}">
+            <text class="amount">¥{{item.leastAmount}}</text> 起
+          </view>
+        </view>
       </view>
-    </header>
-    <view class="food-list" wx:if="{{mode === 'food'}}">
-      饮食
-    </view>
-    <view class="gym-list" wx:if="{{mode === 'gym'}}">
-      场馆
     </view>
   </view>
 </template>
@@ -17,41 +25,124 @@
 <script>
 import wepy from 'wepy'
 import API from '../api'
-import Header from '../components/header'
 
 export default class extends wepy.page {
-  components = {
-    header: Header
+  config = {
+    navigationBarTitleText: '收藏',
+    backgroundColor: '#657B8C',
+    backgroundColorBottom: '#657B8C'
   }
 
   data = {
-    mode: 'food',
-    foods: [],
     gyms: []
   }
 
   methods = {
-    tabChange(index) {
-      this.mode = (index === 0 ? 'food' : 'gym')
+    detail(item) {
+      wepy.navigateTo({ url: `/pages/gym?id=${item.gymCode}` })
     }
   }
 
-  async loadFoods() {
-    this.foods = await API.getFavorFoods()
-  }
-
   async loadGyms() {
-    this.gyms = await API.favorGyms()
+    const { rows } = await API.favorGyms()
+    this.gyms = rows
+    this.$apply()
   }
 
   onLoad() {
-    this.$invoke('tabs', 'init', ['饮食', '场馆'])
-    this.loadFoods()
     this.loadGyms()
   }
 }
 </script>
 
 <style lang="scss">
+.container {
+  min-height: 100vh;
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: #657B8C;
+}
+.header {
+  position: relative;
+  padding: 15px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  background-color: #fff;
+  &:before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 6px;
+    content: '';
+    background: linear-gradient(180deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
+  }
+}
+.gym-list {
+  overflow: hidden;
+  .item {
+    position: relative;
+    margin: 15px;
+    border-radius: 4px;
+    padding: 10px;
+    display: flex;
+    flex-direction: row;
+    background-color: #fff;
+    image {
+      height: 94px;
+      width: 94px;
+    }
+    .summary {
+      flex: 1;
+      padding-left: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
 
+    .title-line {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .title {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 500;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .location {
+      padding-left: 15px;
+      font-size: 13px;
+      color: #999;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23999' d='M12 0C7.038 0 3 4.066 3 9.065c0 7.103 8.154 14.437 8.501 14.745a.749.749 0 00.998.001C12.846 23.502 21 16.168 21 9.065 21 4.066 16.962 0 12 0zm0 14c-2.757 0-5-2.243-5-5s2.243-5 5-5 5 2.243 5 5-2.243 5-5 5z'/%3E%3C/svg%3E");
+      background-size: 13px 13px;
+      background-repeat: no-repeat;
+      background-position: left center;
+    }
+
+    .note {
+      margin: 5px;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      color: #888;
+      font-size: 11px;
+    }
+
+    .price {
+      font-size: 12px;
+      font-weight: 500;
+      color: #F86D24;
+      .amount {
+        font-size: 15px;
+      }
+    }
+  }
+}
 </style>

@@ -15,7 +15,10 @@ export default class extends wepy.app {
       'pages/gym-item',
       'pages/favorite',
       'pages/enter',
-      'pages/leave'
+      'pages/leave',
+      'pages/wallet',
+      'pages/flow',
+      'pages/orders'
     ],
     tabBar: {
       custom: true,
@@ -202,6 +205,12 @@ view {
     border: none;
     line-height: 45px;
     background: linear-gradient(90deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
+    color: #fff;
+  }
+  &.accent {
+    border: none;
+    line-height: 45px;
+    background: linear-gradient(90deg,rgba(255,88,63,1) 0%,rgba(255,127,82,1) 100%);
     color: #fff;
   }
 }

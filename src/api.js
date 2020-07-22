@@ -56,13 +56,20 @@ export default {
     }
   },
   favorGyms() {
-    return get('/gyms/favor')
+    return get('/gym/myFavGymPage', { pageIndex: 1, pageSize: 99 })
   },
   calendar(gmtTimeStart, gmtTimeEnd) {
     return get('/userTrack/myTrack', { gmtTimeStart, gmtTimeEnd })
   },
-  myOrders() {
-    return get('/userOrder/myOrders', { pageIndex: 1, pageSize: 99 })
+  myOrders(type) {
+    return get('/userOrder/myOrders', {
+      pageIndex: 1,
+      pageSize: 99,
+      chargeType: {
+        course: 1,
+        free: 2
+      }[type]
+    })
   },
   preEntranceCheck(gymCode) {
     return get('/userOrder/preEntranceCheck', { gymCode })
@@ -87,6 +94,9 @@ export default {
   },
   currentActivity() {
     return get('/userTrack/currentTrack', { gymCode: 'GYM00001' })
+  },
+  moneyFlow() {
+    return get('/userOrderPayFlow/myPayFlow', { pageIndex: 1, pageSize: 99 })
   }
 }
 

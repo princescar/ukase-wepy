@@ -1,0 +1,97 @@
+<template>
+  <view class="container">
+    <view class="header">
+      <view class="section">
+        <view class="title">余额（元）</view>
+        <view class="amount">0.00</view>
+      </view>
+      <view class="section">
+        <view class="title">积分</view>
+        <view class="amount">0</view>
+      </view>
+      <navigator class="detail" url="/pages/flow">明细</navigator>
+    </view>
+    <view class="buttons">
+      <button class="block-button accent" @tap="recharge">
+        充值
+      </button>
+      <button class="block-button primary" @tap="withdraw">
+        提现
+      </button>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+
+export default class extends wepy.page {
+  config = {
+    navigationBarTitleText: '钱包'
+  }
+
+  methods = {
+    recharge() {
+      wx.showToast({ title: '该功能暂未开放', icon: 'none' })
+    },
+    withdraw() {
+      wx.showToast({ title: '该功能暂未开放', icon: 'none' })
+    }
+  }
+}
+</script>
+
+<style lang="scss">
+.header {
+  position: relative;
+  padding: 40px 0;
+  display: flex;
+  flex-direction: row;
+  background: linear-gradient(360deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
+  color: #fff;
+  .section {
+    flex: 1;
+    padding-top: 3px;
+    padding-bottom: 7px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    & + .section {
+      border-left: 1px solid #fff;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .amount {
+      font-size: 26px;
+      font-weight: 500;
+    }
+  }
+  .detail {
+    position: absolute;
+    top: 11px;
+    right: 15px;
+    padding-right: 11px;
+    font-size: 12px;
+    &:before, &:after {
+      position: absolute;
+      content: '';
+      right: 0;
+      top: 6px;
+      border: 1px solid #eee;
+      border-radius: 999px;
+      width: 6px;
+      transform: rotate(45deg);
+    }
+    &:after {
+      top: 10px;
+      transform: rotate(-45deg);
+    }
+  }
+}
+.buttons {
+  padding: 42px 48px;
+}
+</style>

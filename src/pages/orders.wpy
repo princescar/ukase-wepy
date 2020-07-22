@@ -1,0 +1,357 @@
+<template>
+  <view class="container">
+    <view class="tabbar">
+      <view
+        class="{{activeTab === 'free' ? 'tab active' : 'tab'}}"
+        @tap="changeTab('free')"
+      >
+        自由锻练
+      </view>
+      <view
+        class="{{activeTab === 'course' ? 'tab active' : 'tab'}}"
+        @tap="changeTab('course')"
+      >
+        课程记录
+      </view>
+    </view>
+    <view class="timeline" wx:if="{{activeTab === 'free'}}">
+      <view
+        class="date-group"
+        wx:for="{{dates}}"
+        wx:key="date"
+      >
+        <view class="date">
+          {{item.dateString}}
+          <view class="year" wx:if="{{item.yearString}}">{{item.yearString}}</view>
+        </view>
+        <view class="free-order-list">
+          <view
+            class="item"
+            wx:for="{{freeOrderMap[item.date]}}"
+            wx:key="id"
+          >
+            <view class="duration"><text class="minutes">{{item.durationMinutes}}</text> 分钟</view>
+            <view class="gym">{{item.gymInfo.name}}</view>
+            <view class="last-line">
+              <view class="time">{{item.inTimeString}}-{{item.outTimeString}}</view>
+              <view>总费用 ¥ <text class="amount">{{item.amount}}</text></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+    <view class="course-order-list" wx:if="{{activeTab === 'course'}}">
+      <view
+        class="item"
+        wx:for="{{courseOrders}}"
+        wx:key="id"
+      >
+        <view class="title-line">
+          <view class="title">{{item.itemInfo.itemName}}</view>
+          <view class="status">已结束</view>
+        </view>
+        <view class="duration">{{item.durationMinutes}}分钟</view>
+        <view class="gym">{{item.gymInfo.name}}</view>
+        <view class="last-line">
+          <view class="time">{{item.dateString}} {{item.inTimeString}}-{{item.outTimeString}}</view>
+          <view>总费用 ¥ <text class="amount">{{item.amount}}</text></view>
+        </view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import dayjs from 'dayjs'
+import API from '../api'
+
+export default class extends wepy.page {
+  config = {
+    navigationBarTitleText: '订单',
+    backgroundColor: '#ECEFF2',
+    backgroundColorBottom: '#ECEFF2'
+  }
+
+  data = {
+    activeTab: 'free',
+    dates: [],
+    freeOrderMap: {},
+    courseOrders: []
+  }
+
+  methods = {
+    changeTab(tab) {
+      this.activeTab = tab
+      this.loadOrder(tab)
+    }
+  }
+
+  async loadOrder(type) {
+    const { rows } = await API.myOrders(type)
+    if (type === 'free') {
+      const orderMap = {}
+      rows.forEach(x => {
+        const inTime = dayjs(x.inTime)
+        const outTime = dayjs(x.outTime)
+        const date = outTime.format('YYYY-MM-DD')
+        x.durationMinutes = outTime.diff(inTime, 'minute')
+        x.inTimeString = inTime.format('HH:mm')
+        x.outTimeString = outTime.format('HH:mm')
+        if (!orderMap[date]) {
+          orderMap[date] = []
+        }
+        orderMap[date].push(x)
+      })
+      console.log(orderMap)
+      const dates = Object.keys(orderMap).map(x => {
+        const date = dayjs(x)
+        const diff = date.diff(dayjs(), 'day')
+        if (diff === 0) {
+          return { date: x, dateString: '今天' }
+        } else if (diff === 1) {
+          return { date: x, dateString: '昨天' }
+        } else {
+          return {
+            date: x,
+            dateString: date.format('MM-DD'),
+            yearString: date.format('YYYY')
+          }
+        }
+      })
+      console.log(dates)
+
+      this.freeOrderMap = orderMap
+      this.dates = dates
+    } else if (type === 'course') {
+      rows.forEach(x => {
+        const inTime = dayjs(x.inTime)
+        const outTime = dayjs(x.outTime)
+        x.dateString = outTime.format('YYYY-MM-DD')
+        x.durationMinutes = outTime.diff(inTime, 'minute')
+        x.inTimeString = inTime.format('HH:mm')
+        x.outTimeString = outTime.format('HH:mm')
+      })
+      this.courseOrders = rows
+    }
+    this.$apply()
+  }
+
+  onShow() {
+    this.loadOrder(this.activeTab)
+  }
+}
+</script>
+
+<style lang="scss">
+.container {
+  min-height: 100vh;
+  padding-top: 50px;
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: #ECEFF2;
+}
+.tabbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  background-color: #657B8C;
+  z-index: 1;
+  .tab {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    color: rgba(255,255,255,.7);
+    transition: font-size .3s ease-in-out, color .3s ease-in-out;
+    & + .tab {
+      margin-left: 30px;
+    }
+    &.active {
+      font-size: 16px;
+      color: #fff;
+      &:after {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        content: '';
+        border-radius: 3px;
+        height: 5px;
+        background: linear-gradient(90deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
+      }
+    }
+  }
+}
+.timeline {
+  position: relative;
+  margin-top: 20px;
+  padding-bottom: 20px;
+  &:before {
+    position: absolute;
+    content: '';
+    left: 67px;
+    top: 0;
+    bottom: 0;
+    border-radius: 1px;
+    width: 2px;
+    background: linear-gradient(224deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
+  }
+  .date-group {
+    display: flex;
+    flex-direction: row;
+    & + .date-group {
+      margin-top: 15px;
+    }
+    &:first-of-type {
+      .date{
+        font-size: 15px;
+        &:after {
+          top: 5px;
+          right: -6px;
+          height: 10px;
+          width: 10px;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3CradialGradient cx='50%25' cy='50%25' fx='50%25' fy='50%25' r='50%25' gradientTransform='matrix(1 0 0 1.068 0 -.034)' id='prefix__a'%3E%3Cstop stop-color='%2329C0B8' offset='0%25'/%3E%3Cstop stop-color='%2323E2A4' offset='100%25'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Ccircle fill='url(%23prefix__a)' cx='5' cy='5' r='5'/%3E%3Ccircle fill='%23FFF' cx='5' cy='5' r='2'/%3E%3C/g%3E%3C/svg%3E");
+          background-size: 10px 10px;
+        }
+      }
+    }
+    .date {
+      position: relative;
+      margin-top: -8px;
+      width: 67px;
+      min-width: 67px;
+      max-width: 67px;
+      padding-right: 15px;
+      text-align: right;
+      font-size: 13px;
+      font-weight: 500;
+      &:after {
+        position: absolute;
+        content: '';
+        top: 6px;
+        right: -4px;
+        height: 6px;
+        width: 6px;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3CradialGradient cx='50%25' cy='50%25' fx='50%25' fy='50%25' r='50%25' gradientTransform='matrix(1 0 0 1.068 0 -.034)' id='prefix__a'%3E%3Cstop stop-color='%2329C0B8' offset='0%25'/%3E%3Cstop stop-color='%2323E2A4' offset='100%25'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='68' cy='282' r='3' transform='translate(-65 -279)' fill='url(%23prefix__a)' fill-rule='evenodd'/%3E%3C/svg%3E");
+        background-size: 6px 6px;
+        background-position: center center;
+        background-repeat: no-repeat;
+      }
+      .year {
+        margin-top: 4px;
+        font-size: 12px;
+        color: #999;
+      }
+    }
+    .free-order-list {
+      flex: 1;
+      margin-left: 2px;
+      padding: 0 15px;
+      overflow: hidden;
+      .item {
+        border-radius: 4px;
+        height: 100px;
+        padding: 15px;
+        background-color: #fff;
+        overflow: hidden;
+        & + .item {
+          margin-top: 15px;
+        }
+        .duration {
+          font-size: 13px;
+          font-weight: 500;
+          color: #1CAF9F;
+          .minutes {
+            font-size: 17px;
+          }
+        }
+        .gym {
+          margin-top: 10px;
+          font-size: 12px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          color: #666;
+        }
+        .last-line {
+          margin-top: 4px;
+          display: flex;
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          .time {
+            color: #666;
+          }
+          .amount {
+            font-size: 15px;
+            font-weight: 500;
+          }
+        }
+      }
+    }
+  }
+}
+.course-order-list {
+  padding: 15px;
+  overflow: hidden;
+  .item {
+    border-radius: 4px;
+    height: 127px;
+    padding: 15px;
+    background-color: #fff;
+    overflow: hidden;
+    & + .item {
+      margin-top: 15px;
+    }
+    .title-line {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      .title {
+        font-size: 15px;
+        font-weight: 500;
+      }
+      .status {
+        font-size: 12px;
+        color: #F86D24;
+      }
+    }
+    .duration {
+      margin-top: 8px;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .gym {
+      margin-top: 10px;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #666;
+    }
+    .last-line {
+      margin-top: 4px;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      .time {
+        color: #666;
+      }
+      .amount {
+        font-size: 15px;
+        font-weight: 500;
+      }
+    }
+  }
+}
+</style>

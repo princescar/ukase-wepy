@@ -103,7 +103,7 @@ export default class extends wepy.page {
 
   methods = {
     detail(item) {
-      wepy.navigateTo({ url: `gym?id=${item.gymCode}` })
+      wepy.navigateTo({ url: `/pages/gym?id=${item.gymCode}` })
     },
     onRangeChanged(e) {
       if (!this.hasUserLocation) {

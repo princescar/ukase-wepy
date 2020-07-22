@@ -74,6 +74,26 @@
 					"pathName": "pages/tab-mine",
 					"query": "",
 					"scene": null
+				},
+				{
+					"id": -1,
+					"name": "pages/wallet",
+					"pathName": "pages/wallet",
+					"query": "",
+					"scene": null
+				},
+				{
+					"id": -1,
+					"name": "pages/flow",
+					"pathName": "pages/flow",
+					"query": "",
+					"scene": null
+				},
+				{
+					"id": -1,
+					"name": "pages/orders",
+					"pathName": "pages/orders",
+					"scene": null
 				}
 			]
 		}

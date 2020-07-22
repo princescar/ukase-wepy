@@ -26,18 +26,18 @@
         />
       </view>
       <view class="module-list">
-        <view class="item" @tap="go('wallet')">
+        <navigator class="item" url="/pages/wallet">
           <view class="icon wallet"/>钱包
-        </view>
-        <view class="item" @tap="go('order')">
+        </navigator>
+        <navigator class="item" url="/pages/orders">
           <view class="icon order"/>订单
-        </view>
-        <view class="item" @tap="go('favor')">
+        </navigator>
+        <navigator class="item" url="/pages/favorite">
           <view class="icon favor"/>收藏
-        </view>
-        <view class="item" @tap="go('coupon')">
+        </navigator>
+        <navigator class="item" url="/pages/coupon">
           <view class="icon coupon"/>优惠券
-        </view>
+        </navigator>
       </view>
     </view>
     <view class="current-activity" wx:if="{{activity}}">
@@ -67,12 +67,6 @@
         </view>
       </view>
       <view class="course-list" wx:if="{{eventMap[selectedDate].length > 0}}">
-        <!-- <view class="item coming">
-          <view class="time">13:20-14:05</view>
-          <view class="name">瑜伽课L1</view>
-          <view class="note">梦洁健身  教练：张教练</view>
-          <view class="hint">距离开始还有15分43秒</view>
-        </view> -->
         <view
           wx:for="{{eventMap[selectedDate]}}"
           wx:key="id"
@@ -92,8 +86,8 @@
       </view>
     </view>
     <view class="tip">
-      <view>请阅读《用户协议》和《隐私协议》</view>
-      <button class="contact" open-type="contat">在线客服</button>
+      <navigator url="/pages/agreement">请阅读《用户协议》和《隐私协议》</navigator>
+      <button class="contact" open-type="contact">在线客服</button>
     </view>
   </view>
 </template>

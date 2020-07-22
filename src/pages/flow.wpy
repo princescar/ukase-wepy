@@ -1,0 +1,102 @@
+<template>
+  <view class="container">
+    <view class="header">明细</view>
+    <view class="list">
+      <view
+        class="item"
+        wx:for="{{flow}}"
+        wx:key="id"
+      >
+        <view class="title">乐刻</view>
+        <view class="note">自由锻练</view>
+        <view class="note">{{item.payDateString}}</view>
+        <view class="amount">¥ {{item.actPayAmount}}</view>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import wepy from 'wepy'
+import dayjs from 'dayjs'
+import API from '../api'
+
+export default class extends wepy.page {
+  config = {
+    navigationBarTitleText: '明细',
+    backgroundColor: '#ECEFF2',
+    backgroundColorBottom: '#ECEFF2'
+  }
+
+  data = {
+    flow: []
+  }
+
+  async loadFlow() {
+    const { rows } = await API.moneyFlow()
+    rows.forEach(x => {
+      x.payDateString = dayjs(x.gmtPay).format('YYYY-MM-DD')
+    })
+    this.flow = rows
+    this.$apply()
+  }
+
+  onShow() {
+    this.loadFlow()
+  }
+}
+</script>
+
+<style lang="scss">
+.container {
+  padding-bottom: env(safe-area-inset-bottom);
+  background-color: #ECEFF2;
+}
+
+.header {
+  position: relative;
+  padding: 15px 20px;
+  font-size: 16px;
+  font-weight: 500;
+  background-color: #fff;
+  &:before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 6px;
+    content: '';
+    background: linear-gradient(180deg,rgba(41,192,184,1) 0%,rgba(35,226,164,1) 100%);
+  }
+}
+
+.list {
+  margin-top: 10px;
+  background-color: #fff;
+  .item {
+    position: relative;
+    margin-left: 15px;
+    padding: 15px 20px;
+    padding-left: 0;
+    & + .item {
+      border-top: .5px solid #E8ECF0;
+    }
+    .title {
+      font-size: 14px;
+    }
+    .note {
+      margin-top: 4px;
+      font-size: 12px;
+      color: #999;
+    }
+    .amount {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-size: 17px;
+      font-weight: 500;
+      color: #F86D24;
+    }
+  }
+}
+</style>
