@@ -7,10 +7,10 @@
         wx:for="{{flow}}"
         wx:key="id"
       >
-        <view class="title">乐刻</view>
-        <view class="note">自由锻练</view>
+        <view class="title">{{item.orderInfo.gymInfo.name}}</view>
+        <view class="note">{{item.orderInfo.itemInfo.itemName}}</view>
         <view class="note">{{item.payDateString}}</view>
-        <view class="amount">¥ {{item.actPayAmount}}</view>
+        <view class="amount">¥ {{item.amount}}</view>
       </view>
     </view>
   </view>

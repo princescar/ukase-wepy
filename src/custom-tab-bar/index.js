@@ -3,9 +3,9 @@ const Scan = require('../services/scan').default
 Component({
   data: {
     selected: 0,
-    color: '#7C7C7C',
-    selectedColor: '#32A971',
-    backgroundColor: '#FAFAFA',
+    color: '#728391',
+    selectedColor: '#1CAF9F',
+    backgroundColor: '#F6F6F6',
     list: [
       {
         pagePath: '/pages/tab-gyms',

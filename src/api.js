@@ -68,7 +68,8 @@ export default {
       chargeType: {
         course: 1,
         free: 2
-      }[type]
+      }[type],
+      orderType: 'inTime'
     })
   },
   preEntranceCheck(gymCode) {
@@ -93,10 +94,10 @@ export default {
     return get('/user/userInfo')
   },
   currentActivity() {
-    return get('/userTrack/currentTrack', { gymCode: 'GYM00001' })
+    return get('/userTrack/currentTrack')
   },
   moneyFlow() {
-    return get('/userOrderPayFlow/myPayFlow', { pageIndex: 1, pageSize: 99 })
+    return get('/userOrderPayFlow/myPayFlow', { pageIndex: 1, pageSize: 999 })
   }
 }
 

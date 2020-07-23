@@ -12,7 +12,7 @@
             </view>
           </view>
           <view class="rating star-{{item.rating}}"/>
-          <view class="note">【{{item.district}}】{{item.category}}</view>
+          <view class="note">{{item.district}} | {{item.category}}</view>
           <view class="price" wx:if="{{item.leastAmount}}">
             <text class="amount">¥{{item.leastAmount}}</text> 起
           </view>
@@ -127,7 +127,7 @@ export default class extends wepy.page {
     }
 
     .note {
-      margin: 5px;
+      margin: 5px 0;
       display: flex;
       flex-direction: row;
       justify-content: space-between;

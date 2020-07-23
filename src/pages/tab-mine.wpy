@@ -26,18 +26,18 @@
         />
       </view>
       <view class="module-list">
-        <navigator class="item" url="/pages/wallet">
+        <view class="item" @tap="go('/pages/wallet')">
           <view class="icon wallet"/>钱包
-        </navigator>
-        <navigator class="item" url="/pages/orders">
+        </view>
+        <view class="item" @tap="go('/pages/orders')">
           <view class="icon order"/>订单
-        </navigator>
-        <navigator class="item" url="/pages/favorite">
+        </view>
+        <view class="item" @tap="go('/pages/favorite')">
           <view class="icon favor"/>收藏
-        </navigator>
-        <navigator class="item" url="/pages/coupon">
+        </view>
+        <view class="item" @tap="go('/pages/coupon')">
           <view class="icon coupon"/>优惠券
-        </navigator>
+        </view>
       </view>
     </view>
     <view class="current-activity" wx:if="{{activity}}">
@@ -86,7 +86,7 @@
       </view>
     </view>
     <view class="tip">
-      <navigator url="/pages/agreement">请阅读《用户协议》和《隐私协议》</navigator>
+      <view @tap="go('/pages/agreement')">请阅读《用户协议》和《隐私协议》</view>
       <button class="contact" open-type="contact">在线客服</button>
     </view>
   </view>
@@ -114,6 +114,9 @@ export default class extends wepy.page {
   }
 
   methods = {
+    go(url) {
+      wepy.navigateTo({ url })
+    },
     selectDate(date) {
       this.selectedDate = date.date
     }

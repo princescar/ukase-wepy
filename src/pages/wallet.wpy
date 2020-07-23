@@ -9,7 +9,7 @@
         <view class="title">积分</view>
         <view class="amount">0</view>
       </view>
-      <navigator class="detail" url="/pages/flow">明细</navigator>
+      <view class="detail" @tap="go('/pages/flow')">明细</view>
     </view>
     <view class="buttons">
       <button class="block-button accent" @tap="recharge">
@@ -31,6 +31,9 @@ export default class extends wepy.page {
   }
 
   methods = {
+    go(url) {
+      wepy.navigateTo({ url })
+    },
     recharge() {
       wx.showToast({ title: '该功能暂未开放', icon: 'none' })
     },

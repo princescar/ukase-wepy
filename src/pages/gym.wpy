@@ -17,7 +17,7 @@
           {{ gym.favFlag ? '已收藏' : '点击收藏' }}
         </view>
       </view>
-      <view class="note">【{{gym.district}}】{{gym.category}}</view>
+      <view class="note">{{gym.district}} | {{gym.category}}</view>
     </view>
     <view class="cell-group">
       <view class="cell">
