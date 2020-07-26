@@ -17,7 +17,15 @@ export default {
     if ((action !== 'enter' && action !== 'leave') || !gymCode) throw new Error('无法识别的二维码')
     if (action === 'leave' && !codeNo) throw new Error('无法识别的二维码')
 
-    const { canEnterInto } = await API.preEntranceCheck(gymCode)
+    let canEnterInto = null
+    try {
+      const res = await API.preEntranceCheck(gymCode)
+      canEnterInto = res.canEnterInto
+    } catch (e) {
+    }
+    if (canEnterInto === null) {
+      return
+    }
     if (canEnterInto && action === 'leave') throw new Error('无法出场，您不在场内')
     if (!canEnterInto && action === 'enter') throw new Error('无法入场，您已在场内')
 

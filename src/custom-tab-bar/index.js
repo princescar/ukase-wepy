@@ -40,6 +40,7 @@ Component({
     scanCode() {
       wx.scanCode({
         scanType: 'qrCode',
+        onlyFromCamera: true,
         success(res) {
           Scan.handle(res.result).catch(function(e) {
             wx.showModal({ title: '错误', content: e.message, showCancel: false })

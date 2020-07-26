@@ -3,10 +3,11 @@
     <view class="lesson-summary">
       <view class="title">{{gymItem.itemName}}</view>
       <view class="note">时长：{{gymItem.chargeStartTimeString}}-{{gymItem.chargeEndTimeString}} （{{gymItem.itemDuration}}分钟）</view>
+      <view class="note">教练：{{gymItem.itemCoach}}</view>
       <view class="note">内容：{{gymItem.description}}</view>
       <view class="tip">
         <view class="title">温馨提示</view>
-        <view class="content">请勿提前太早时间入场，建议提前十分钟内进入即可，若早于开始前十分钟进入或者课程结束后十五分钟内没有离开，会产生自由锻炼的费用。</view>
+        <view class="content">请勿提前太早时间入场，建议提前10分钟内进入即可，若早于开始前15分钟进入或者课程结束后15分钟内没有离开，会产生自由锻炼的费用。</view>
         <view class="content">目前课程预定暂不支持退款，确定前请再三确认。</view>
       </view>
     </view>
@@ -95,6 +96,13 @@ export default class extends wepy.page {
   }
 
   async book() {
+    const { confirm } = await wepy.showModal({
+      title: '提示',
+      content: '目前课程预定暂不支持退款，确定前请再三确认',
+      confirmText: '我已知晓'
+    })
+    if (!confirm) return
+
     const { gymCode, itemCode, itemChargeCode } = this.gymItem
     const { orderNo } = await API.newBooking(gymCode, itemCode, itemChargeCode, this.selectedDate)
     const { params } = await API.pay(orderNo)

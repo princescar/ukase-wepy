@@ -20,10 +20,10 @@ export default {
       params.maxDistance = distance
     }
     if (sortBy) {
-      params.sortType = sortBy.key
+      params.sortType = sortBy
     }
-    if (filter && filter.key) {
-      params.category = filter.key
+    if (filter && filter) {
+      params.category = filter
     }
     if (pagination) {
       params.pageIndex = pagination.pageIndex
@@ -59,7 +59,7 @@ export default {
     return get('/gym/myFavGymPage', { pageIndex: 1, pageSize: 99 })
   },
   calendar(gmtTimeStart, gmtTimeEnd) {
-    return get('/userTrack/myTrack', { gmtTimeStart, gmtTimeEnd })
+    return get('/userTrack/myTrack', { gmtTimeStart, gmtTimeEnd, trackType: 3 })
   },
   myOrders(type) {
     return get('/userOrder/myOrders', {
@@ -118,10 +118,8 @@ function request(method, url, query, body) {
     fullUrl += `?${qs}`
   }
 
-  console.debug(method)
-  console.debug(fullUrl)
-  console.debug(token)
-  console.debug(body)
+  console.debug(method, fullUrl)
+  body && console.debug(body)
 
   return wepy
     .request({
@@ -130,24 +128,29 @@ function request(method, url, query, body) {
       url: fullUrl,
       data: body
     })
-    .catch(error => {
-      showError(error.errMsg)
-      throw new Error(error.errMsg)
-    })
     .then(resp => {
-      if (resp.data && resp.data.code !== '200') {
-        showError(resp.data.msg)
-        throw new Error(resp.data.code)
+      console.debug(resp.statusCode, method, fullUrl)
+      console.debug(resp.data)
+      if (!resp || !resp.data) {
+        throw new Error('服务端未返回数据')
+      } else if (resp.data && resp.data.code !== '200') {
+        const error = new Error(resp.data.msg)
+        error.code = resp.data.code
+        throw error
       } else {
         return resp.data.data
       }
     })
+    .catch(error => {
+      showError(error)
+      throw error
+    })
 }
 
-function showError(msg) {
+function showError(error) {
   wepy.showModal({
     title: '错误',
-    content: msg || '发生了未知错误',
+    content: error.message || '发生了未知错误',
     showCancel: false
   })
 }

@@ -17,7 +17,10 @@
           {{ gym.favFlag ? '已收藏' : '点击收藏' }}
         </view>
       </view>
-      <view class="note">{{gym.district}} | {{gym.category}}</view>
+      <view class="note">
+        {{gym.district}} | {{gym.category}}
+        <text wx:if="{{gym.phone}}" @tap="call"> | {{gym.phone}}</text>
+      </view>
     </view>
     <view class="cell-group">
       <view class="cell">
@@ -41,6 +44,9 @@
             <view class="item" wx:for="{{gym.normalItems}}" wx:key="itemChargeCode">
               {{item.chargeStartTimeString}}-{{item.chargeEndTimeString}}
               <text class="price">¥{{item.chargePrice}}/小时</text>
+            </view>
+            <view class="item" wx:if="{{gym.leastChargeAmount > 0}}">
+              最低消费 <text class="price">{{gym.leastChargeAmount}}元</text>
             </view>
           </view>
         </view>
@@ -105,8 +111,8 @@ export default class extends wepy.page {
       wepy.showToast({ title, icon: 'none' })
       this.$apply()
     },
-    closeDialog() {
-      this.dialogOpen = false
+    call() {
+      wepy.makePhoneCall({ phoneNumber: this.gym.phone })
     },
     showMap() {
       wepy.openLocation({

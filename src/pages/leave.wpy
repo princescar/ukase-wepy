@@ -8,7 +8,9 @@
         <view class="title">详情</view>
         <view class="item">入场时间：{{charge.inTimeString}}</view>
         <view class="item">出场时间：{{charge.outTimeString}}</view>
-        <view class="item">课程：无</view>
+        <view class="item">课程：
+          <text wx:for="{{charge.todayOrders}}" wx:key="id">{{item.itemInfo.itemName}} </text>  
+        </view>
       </view>
       <view class="total-wrapper">
         总费用
@@ -17,8 +19,11 @@
       </view>
       <view class="charge-list-wrapper">
         <view class="charge-list" wx:if="{{detailOpen}}">
-          <view class="item" wx:for="{{charge.detail}}" wx:key="id">
+          <view class="item" wx:for="{{charge.detail}}" wx:key="id" wx:if="{{!item.leastChargeAmount}}">
             {{item.startString}}-{{item.endString}} ¥{{item.price}}/小时；
+          </view>
+          <view class="item" wx:if="{{charge.leastChargeAmount > 0}}">
+            最低消费 {{charge.leastChargeAmount}} 元
           </view>
         </view>
         <view
@@ -30,7 +35,7 @@
       </view>
     </view>
     <view class="footer-bar">
-      <view class="tip">课程时间内不另计费，课程前后10分钟不计费</view>
+      <view class="tip">课程时间内不另计费，课程前后15分钟不计费</view>
       <button class="block-button primary" @tap="pay">确认</button>
     </view>
   </view>
@@ -47,8 +52,7 @@ export default class extends wepy.page {
     navigationBarTitleText: '出场',
     backgroundColor: '#657B8C',
     backgroundColorTop: '#657B8C',
-    backgroundColorBottom: '#657B8C',
-    disableScroll: true
+    backgroundColorBottom: '#657B8C'
   }
 
   data = {
@@ -93,9 +97,13 @@ export default class extends wepy.page {
     })
     this.charge.detail = JSON.parse(this.charge.chargeDetail)
     this.charge.detail.forEach(item => {
-      const { start, end } = item
-      item.startString = dayjs(start).format('HH:mm')
-      item.endString = dayjs(end).format('HH:mm')
+      const { start, end, leastChargeAmount } = item
+      if (!leastChargeAmount) {
+        item.startString = dayjs(start).format('HH:mm')
+        item.endString = dayjs(end).format('HH:mm')
+      } else {
+        this.charge.leastChargeAmount = leastChargeAmount
+      }
     })
     this.$apply()
   }
@@ -114,7 +122,8 @@ page {
 }
 .container {
   position: relative;
-  height: 100vh;
+  min-height: 100vh;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
   background-color: #657B8C;
   overflow: hidden;
 }
@@ -246,7 +255,11 @@ page {
   margin: 15px;
   text-align: center;
   font-size: 12px;
-  color: rgba(255,255,255,.5);
+  color: rgba(179, 114, 114, 0.5);
+}
+
+.footer-bar {
+  background-color: #657B8C;
 }
 
 @media

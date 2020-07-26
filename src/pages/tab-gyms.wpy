@@ -51,8 +51,8 @@
           </view>
           <view class="rating star-{{item.rating}}"/>
           <view class="note">{{item.district}} | {{item.category}}</view>
-          <view class="price" wx:if="{{item.leastAmount}}">
-            <text class="amount">¥{{item.leastAmount}}</text> 起
+          <view class="price" wx:if="{{item.leastChargeAmount}}">
+            <text class="amount">¥{{item.leastChargeAmount}}</text> 起
           </view>
         </view>
       </view>
@@ -79,23 +79,22 @@ export default class extends wepy.page {
     banners: [],
     gyms: [],
     distances: [
-      { label: '附近3km', value: { max: 3000, min: 0 } },
-      { label: '附近10km', value: { max: 10000, min: 0 } },
-      { label: '附近30km', value: { max: 30000, min: 0 } },
-      { label: '不限距离', value: null }
+      { label: '附近3km', value: 3000 },
+      { label: '附近10km', value: 10000 },
+      { label: '附近30km', value: 30000 }
     ],
-    distanceIndex: 3,
+    distanceIndex: 2,
     sortings: [
-      { label: '距离优先', value: { key: 'distance', direction: 'asc' } },
-      { label: '评分优先', value: { key: 'rating', direction: 'desc' } },
-      { label: '低价优先', value: { key: 'hourlyPrice', direction: 'asc' } },
-      { label: '高价优先', value: { key: 'hourlyPrice', direction: 'desc' } }
+      { label: '距离优先', value: 'distance' },
+      { label: '评分优先', value: 'rating' },
+      { label: '低价优先', value: 'priceAsc' },
+      { label: '高价优先', value: 'priceDesc' }
     ],
     sortingIndex: 0,
     filters: [
-      { label: '全部', value: { key: null } },
-      { label: '健身房', value: { key: '健身房' } },
-      { label: '工作室', value: { key: '工作室' } }
+      { label: '全部', value: null },
+      { label: '健身房', value: '健身房' },
+      { label: '工作室', value: '工作室' }
     ],
     filterIndex: 0,
     hasUserLocation: false

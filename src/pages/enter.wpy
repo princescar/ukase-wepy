@@ -46,8 +46,7 @@ export default class extends wepy.page {
     navigationBarTitleText: '入场',
     backgroundColor: '#657B8C',
     backgroundColorTop: '#657B8C',
-    backgroundColorBottom: '#657B8C',
-    disableScroll: true
+    backgroundColorBottom: '#657B8C'
   }
 
   data = {
@@ -114,7 +113,8 @@ page {
 }
 .container {
   position: relative;
-  height: 100vh;
+  min-height: 100vh;
+  padding-bottom: calc(160px + env(safe-area-inset-bottom));
   background-color: #657B8C;
   overflow: hidden;
 }
@@ -154,10 +154,6 @@ page {
     color: #666;
   }
   .lesson-list {
-    max-height: 169px;
-    overflow: hidden;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
     .item {
       border-radius: 4px;
       height: 77px;
@@ -209,6 +205,10 @@ page {
   color: rgba(255,255,255,.5);
 }
 
+.footer-bar {
+  background-color: #657B8C;
+}
+
 @media
 only screen and (max-height: 700px) {
   .card {
@@ -230,7 +230,6 @@ only screen and (max-height: 700px) {
         margin-top: 15px;
       }
       .lesson-list {
-        max-height: 164px;
         .item + .item {
           margin-top: 10px;
         }
@@ -265,9 +264,6 @@ only screen and (max-height: 600px) {
         height: 120px;
         padding-top: 101px;
         background-size: 121px 88px;
-      }
-      .lesson-list {
-        max-height: 77px;
       }
     }
   }

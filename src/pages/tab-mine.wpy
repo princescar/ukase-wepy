@@ -73,8 +73,7 @@
           class="item {{item.status}}"
         >
           <view class="time">
-            {{item.extraInfo.chargeStartTimeString}}-
-            {{item.extraInfo.chargeEndTimeString}}
+            {{item.extraInfo.chargeStartTimeString}}-{{item.extraInfo.chargeEndTimeString}}
           </view>
           <view class="name">{{item.extraInfo.itemName}}</view>
           <view class="note">{{item.gymName}}  教练：{{item.extraInfo.itemCoach}}</view>
