@@ -85,7 +85,7 @@
       </view>
     </view>
     <view class="tip">
-      <view @tap="go('/pages/agreement')">请阅读《用户协议》和《隐私协议》</view>
+      <view @tap="agreement">请阅读《用户协议》和《隐私协议》</view>
       <button class="contact" open-type="contact">在线客服</button>
     </view>
   </view>
@@ -118,6 +118,10 @@ export default class extends wepy.page {
     },
     selectDate(date) {
       this.selectedDate = date.date
+    },
+    async agreement() {
+      const { tempFilePath } = await wepy.downloadFile({ url: 'https://platform.hmc000.com/consumer-agreement.pdf' })
+      wepy.openDocument({ filePath: tempFilePath })
     }
   }
 
