@@ -130,14 +130,18 @@ export default class extends wepy.page {
   async loadData() {
     const dateString = dayjs().format('YYYY-MM-DD ')
     this.gym = await API.getGym(this.id)
-    this.gym.normalItems.forEach(x => {
-      x.chargeStartTimeString = dayjs(dateString + x.chargeStartTime).format('HH:mm')
-      x.chargeEndTimeString = dayjs(dateString + x.chargeEndTime).format('HH:mm')
-    })
-    this.gym.lessonItems.forEach(x => {
-      x.chargeStartTimeString = dayjs(dateString + x.chargeStartTime).format('HH:mm')
-      x.chargeEndTimeString = dayjs(dateString + x.chargeEndTime).format('HH:mm')
-    })
+    if (this.gym.normalItems) {
+      this.gym.normalItems.forEach(x => {
+        x.chargeStartTimeString = dayjs(dateString + x.chargeStartTime).format('HH:mm')
+        x.chargeEndTimeString = dayjs(dateString + x.chargeEndTime).format('HH:mm')
+      })
+    }
+    if (this.gym.lessonItems) {
+      this.gym.lessonItems.forEach(x => {
+        x.chargeStartTimeString = dayjs(dateString + x.chargeStartTime).format('HH:mm')
+        x.chargeEndTimeString = dayjs(dateString + x.chargeEndTime).format('HH:mm')
+      })
+    }
     this.$apply()
   }
 

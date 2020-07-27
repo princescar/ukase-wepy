@@ -123,7 +123,7 @@ page {
 .container {
   position: relative;
   min-height: 100vh;
-  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  padding-bottom: calc(100px + env(safe-area-inset-bottom));
   background-color: #657B8C;
   overflow: hidden;
 }
@@ -255,7 +255,7 @@ page {
   margin: 15px;
   text-align: center;
   font-size: 12px;
-  color: rgba(179, 114, 114, 0.5);
+  color: rgba(255,255,255,.5);
 }
 
 .footer-bar {
