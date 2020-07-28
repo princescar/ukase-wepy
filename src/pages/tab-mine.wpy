@@ -43,7 +43,7 @@
     <view class="current-activity" wx:if="{{activity}}">
       <view class="time-wrapper">
         <view class="title">锻炼时长</view>
-        <view class="time">{{activity.duration}}</view>
+        <view class="time">{{activity.durationMinutes}} 分钟</view>
       </view>
       <text class="activity">您已入场 {{activity.gymName}}</text>
     </view>
@@ -78,7 +78,7 @@
           <view class="name">{{item.extraInfo.itemName}}</view>
           <view class="note">{{item.gymName}}  教练：{{item.extraInfo.itemCoach}}</view>
           <view class="hint" wx:if="{{item.status === 'coming'}}">未开始</view>
-          <view class="hint" wx:if="{{item.status === 'near'}}">距开始还有{{item.timeBeforeStart}}</view>
+          <view class="hint" wx:if="{{item.status === 'near'}}">距开始还有{{item.minutesBeforeStart}}分钟</view>
           <view class="hint" wx:if="{{item.status === 'ongoing'}}">运动中</view>
           <view class="hint" wx:if="{{item.status === 'past'}}">已结束</view>
         </view>
@@ -94,7 +94,6 @@
 <script>
 import wepy from 'wepy'
 import dayjs from 'dayjs'
-import humanizeDuration from 'humanize-duration'
 import API from '../api'
 import Runtime from '../services/runtime'
 
@@ -150,12 +149,7 @@ export default class extends wepy.page {
     this.activity = await API.currentActivity()
     if (this.activity != null) {
       const { gmtTime } = this.activity
-      this.activity.duration = humanizeDuration(dayjs(gmtTime) - dayjs(), {
-        language: 'zh_CN',
-        units: ['m'],
-        maxDecimalPoints: 0,
-        delimiter: ''
-      })
+      this.activity.durationMinutes = dayjs().diff(dayjs(gmtTime), 'minute')
     }
     this.$apply()
   }
@@ -183,13 +177,7 @@ export default class extends wepy.page {
         x.status = 'coming'
       } else if (now.isBefore(startTime)) {
         x.status = 'near'
-        x.timeBeforeStart = humanizeDuration(startTime - now, {
-          language: 'zh_CN',
-          units: ['m'],
-          maxDecimalPoints: 0,
-          spacer: '',
-          delimiter: ''
-        })
+        x.minutesBeforeStart = startTime.diff(now, 'minute')
       } else if (now.isBefore(endTime)) {
         x.status = 'ongoing'
       } else {

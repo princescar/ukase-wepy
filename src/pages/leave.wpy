@@ -2,7 +2,7 @@
   <view class="container" wx:if="{{gym && charge}}">
     <view class="card">
       <view class="title">锻炼总时长</view>
-      <view class="time">{{charge.duration}}</view>
+      <view class="time">{{charge.durationMinutes}} 分钟</view>
       <view class="date">{{charge.outTimeString}}</view>
       <view class="detail-wrapper">
         <view class="title">详情</view>
@@ -44,7 +44,6 @@
 <script>
 import wepy from 'wepy'
 import dayjs from 'dayjs'
-import humanizeDuration from 'humanize-duration'
 import API from '../api'
 
 export default class extends wepy.page {
@@ -89,12 +88,7 @@ export default class extends wepy.page {
     const { inTime, outTime } = this.charge
     this.charge.inTimeString = dayjs(inTime).format('YYYY-MM-DD HH:mm')
     this.charge.outTimeString = dayjs(outTime).format('YYYY-MM-DD HH:mm')
-    this.charge.duration = humanizeDuration(dayjs(outTime) - dayjs(inTime), {
-      language: 'zh_CN',
-      units: ['m'],
-      maxDecimalPoints: 0,
-      delimiter: ''
-    })
+    this.charge.durationMinutes = dayjs(outTime).diff(dayjs(inTime), 'minute')
     this.charge.detail = JSON.parse(this.charge.chargeDetail)
     this.charge.detail.forEach(item => {
       const { start, end, leastChargeAmount } = item
