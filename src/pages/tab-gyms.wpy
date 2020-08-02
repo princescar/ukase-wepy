@@ -10,6 +10,15 @@
     <view class="filter-area">
       <picker
         class="filter"
+        mode="region"
+        value="{{region}}"
+        @change="onRegionChanged"
+      >
+        {{region[region.length - 1]}}
+        <view class="icon triangle"/>
+      </picker>
+      <picker
+        class="filter"
         range="{{distances}}"
         range-key="label"
         value="{{distanceIndex}}"
@@ -78,6 +87,7 @@ export default class extends wepy.page {
   data = {
     banners: [],
     gyms: [],
+    region: [],
     distances: [
       { label: '附近3km', value: 3000 },
       { label: '附近10km', value: 10000 },
@@ -103,6 +113,9 @@ export default class extends wepy.page {
   methods = {
     detail(item) {
       wepy.navigateTo({ url: `/pages/gym?id=${item.gymCode}` })
+    },
+    onRegionChanged(e) {
+      this.region = e.detail.value
     },
     onRangeChanged(e) {
       if (!this.hasUserLocation) {
