@@ -76,7 +76,11 @@ export default class extends wepy.page {
 
   async enter() {
     await API.enter(this.id)
-    await wepy.showModal({ content: '入场成功', showCancel: false })
+    let content = '入场成功'
+    if (!this.preEntrance.todayLessons || this.preEntrance.todayLessons.length === 0) {
+      content = '入场成功，自由锻炼不包含游泳、洗澡及操课内容，如需以上服务请联系工作人员购买。这句话'
+    }
+    await wepy.showModal({ content, showCancel: false })
     wepy.switchTab({ url: '/pages/tab-mine' })
   }
 
