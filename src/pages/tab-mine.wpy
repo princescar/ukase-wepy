@@ -150,7 +150,7 @@ export default class extends wepy.page {
   async loadActivity() {
     refreshInterval && clearInterval(refreshInterval)
     this.activity = await API.currentActivity()
-    refreshInterval = setInterval(() => {
+    const refresh = () => {
       if (this.activity != null) {
         const { gmtTime } = this.activity
         const totalSeconds = dayjs().diff(dayjs(gmtTime), 'second')
@@ -163,7 +163,11 @@ export default class extends wepy.page {
         this.activity.durationSeconds = String(seconds).padStart(2, '0')
         this.$apply()
       }
-    }, 1000)
+    }
+    refresh()
+    if (this.activity != null) {
+      refreshInterval = setInterval(refresh, 1000)
+    }
     this.$apply()
   }
 
