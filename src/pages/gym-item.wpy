@@ -76,6 +76,7 @@ export default class extends wepy.page {
         this.selectedDate = date.date
       } else {
         wepy.showModal({
+          title: '提示',
           content: '已预约满，请选择其他日期',
           showCancel: false
         })

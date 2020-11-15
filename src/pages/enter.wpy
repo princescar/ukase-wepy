@@ -78,9 +78,9 @@ export default class extends wepy.page {
     await API.enter(this.id)
     let content = '入场成功'
     if (!this.preEntrance.todayLessons || this.preEntrance.todayLessons.length === 0) {
-      content = '入场成功，自由锻炼不包含游泳、洗澡及操课内容，如需以上服务请联系工作人员购买。这句话'
+      content = '自由锻炼不包含游泳、洗澡及操课内容，如需以上服务请联系工作人员购买。'
     }
-    await wepy.showModal({ content, showCancel: false })
+    await wepy.showModal({ title: '入场成功', content, showCancel: false })
     wepy.switchTab({ url: '/pages/tab-mine' })
   }
 
@@ -88,7 +88,7 @@ export default class extends wepy.page {
     this.gym = await API.getGym(this.id)
     this.preEntrance = await API.preEntranceCheck(this.id)
     if (!this.preEntrance.canEnterInto) {
-      await wepy.showModal({ content: '您已在场内', showCancel: false })
+      await wepy.showModal({ title: '提示', content: '您已在场内', showCancel: false })
       wepy.switchTab({ url: '/pages/tab-mine' })
       return
     }

@@ -75,7 +75,7 @@ export default class extends wepy.page {
         } else {
           await API.zeroPay(this.charge.orderNo)
         }
-        await wepy.showModal({ content: '成功出场，欢迎您下次光临', showCancel: false })
+        await wepy.showModal({ title: '出场成功', content: '欢迎您下次光临', showCancel: false })
         wepy.switchTab({ url: '/pages/tab-gyms' })
       } catch (e) {
       }
